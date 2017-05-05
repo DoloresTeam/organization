@@ -4,10 +4,10 @@ import (
 	"github.com/rs/xid"
 )
 
-var subfix string
+var subffix string
 
-func SetSubfix(s string) {
-	subfix = s
+func SetSubffix(s string) {
+	subffix = s
 }
 
 func generatorID() string {

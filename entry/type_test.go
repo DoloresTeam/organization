@@ -7,7 +7,7 @@ import (
 
 func TestAddType(t *testing.T) {
 
-	SetSubfix(`dc=test,dc=go`)
+	SetSubffix(`dc=test,dc=go`)
 
 	aq, err := AddType(`TestType`, `This is TestType from type_test`, UnitType)
 
@@ -15,7 +15,7 @@ func TestAddType(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !strings.HasSuffix(aq.DN, subfix) {
+	if !strings.HasSuffix(aq.DN, subffix) {
 		t.Fatal(`Request dn is invalid`)
 	}
 
@@ -31,4 +31,31 @@ func TestAddType(t *testing.T) {
 	}
 
 	t.Log(aq.Attributes)
+}
+
+func TestModifyType(t *testing.T) {
+
+	SetSubffix(`dc=test,dc=go`)
+
+	_, err := ModifyType(``, ``, ``, ``)
+	if err == nil {
+		t.Fatal(`please check oid juddge logic`)
+	}
+
+	_, err = ModifyType(`1`, ``, ``, UnitType)
+	if err == nil {
+		t.FailNow()
+	}
+
+	mq, _ := ModifyType(`1`, `name`, `description string`, PersonType)
+	if mq == nil {
+		t.FailNow()
+	}
+}
+
+func TestDelType(t *testing.T) {
+
+	dq := DelType(`2`, UnitType)
+
+	t.Log(dq)
 }

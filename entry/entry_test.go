@@ -4,9 +4,9 @@ import "testing"
 
 func TestSetSubfix(t *testing.T) {
 
-	SetSubfix(`s`)
+	SetSubffix(`s`)
 
-	if subfix != `s` {
+	if subffix != `s` {
 		t.FailNow()
 	}
 }
