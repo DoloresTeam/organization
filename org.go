@@ -4,14 +4,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/DoloresTeam/organization/entry"
+	"github.com/DoloresTeam/organization/gorbacx"
+
 	ldap "gopkg.in/ldap.v2"
 )
 
 var UnimplementError = errors.New(`THIS FEATURE UNIMPLEMENT !!`)
 
 type Organization struct {
-	l *ldap.Conn
+	l       *ldap.Conn
+	rbacx   *gorbacx.RBACX
+	subffix string
 }
 
 func NewOrganization(subffix string, ldapBindConn *ldap.Conn) (*Organization, error) {
@@ -20,11 +23,11 @@ func NewOrganization(subffix string, ldapBindConn *ldap.Conn) (*Organization, er
 		return nil, errors.New(`subfix and ldapBindConn must not be nil`)
 	}
 
-	// 方便构造各种 Request
-	entry.SetSubffix(subffix)
+	// TODO 验证ldap 的目录结构
+	org := &Organization{ldapBindConn, gorbacx.New(), subffix}
+	org.initial()
 
-	// 验证ldap 的目录结构
-	return &Organization{ldapBindConn}, nil
+	return org, nil
 }
 
 func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port int) (*Organization, error) {
@@ -40,4 +43,8 @@ func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port i
 	}
 
 	return NewOrganization(subffix, l)
+}
+
+func (org *Organization) initial() {
+
 }

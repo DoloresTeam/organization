@@ -60,6 +60,23 @@ func (rbacx *RBACX) PermissionByID(id string) (*Permission, error) {
 	return nil, fmt.Errorf(`not found permission id: %s`, id)
 }
 
+func (rbacx *RBACX) HasRefrenceType(id string, isUnit bool) string {
+	for _, role := range rbacx.roles {
+		for _, p := range role.permissions {
+			if isUnit {
+				if p.unitTypes.Contains(id) {
+					return p.ID
+				}
+			} else {
+				if p.personTypes.Contains(id) {
+					return p.ID
+				}
+			}
+		}
+	}
+	return ``
+}
+
 func (rbacx *RBACX) MatchedTypes(roleIDs []string) (unitTypes []string, personTypes []string) {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()

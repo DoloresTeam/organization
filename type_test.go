@@ -37,12 +37,29 @@ func TestAllTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = org.allTypes(false)
+	_, err = org.AllTypes(false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = org.allTypes(true)
+	_, err = org.AllTypes(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDelType(t *testing.T) {
+
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	org, err := neworg()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = org.DelType(`b45v01dhfpcidf9rgtag`, true)
 	if err != nil {
 		t.Fatal(err)
 	}
