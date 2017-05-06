@@ -1,7 +1,7 @@
 package organization
 
 import (
-	"fmt"
+	"errors"
 
 	ldap "gopkg.in/ldap.v2"
 )
@@ -35,10 +35,12 @@ func (org *Organization) ModifyType(oid string, name, description string, isUnit
 
 func (org *Organization) DelType(oid string, isUnit bool) error {
 
-	// 删除类型之前需要确认没有任何一个权限有引用这个类型
-	pid := org.rbacx.HasRefrenceType(oid, isUnit)
-	if len(pid) != 0 {
-		return fmt.Errorf(`has other permission: [%s] refrence this type`, pid)
+	pids, err := org.PermissionByType(oid, isUnit)
+	if err != nil {
+		return err
+	}
+	if len(pids) > 0 {
+		return errors.New(`has Permission refrence this type,`)
 	}
 
 	dn := org.dn(generatorOID(), typeCategory(isUnit))

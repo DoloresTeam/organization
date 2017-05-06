@@ -3,37 +3,32 @@ package gorbacx
 import "github.com/deckarep/golang-set"
 
 type Permission struct {
-	ID          string
-	unitTypes   mapset.Set
-	personTypes mapset.Set
+	ID    string
+	types mapset.Set
 }
 
-func NewPermission(id string, unit, person []string) *Permission {
+func NewPermission(id string, types []string) *Permission {
 
-	p := &Permission{id, mapset.NewSet(), mapset.NewSet()}
+	p := &Permission{id, nil}
 
-	p.Add(unit, true)
-	p.Add(person, false)
+	p.Replace(types)
 
 	return p
 }
 
-func (p *Permission) Add(ids []string, isUnit bool) {
+func (p *Permission) Add(ids []string) {
 	for _, id := range ids {
-		if isUnit {
-			p.unitTypes.Add(id)
-		} else {
-			p.personTypes.Add(id)
-		}
+		p.types.Add(id)
 	}
 }
 
-func (p *Permission) Remove(ids []string, isUnit bool) {
+func (p *Permission) Remove(ids []string) {
 	for _, id := range ids {
-		if isUnit {
-			p.unitTypes.Remove(id)
-		} else {
-			p.personTypes.Remove(id)
-		}
+		p.types.Remove(id)
 	}
+}
+
+func (p *Permission) Replace(ids []string) {
+	p.types = mapset.NewSet()
+	p.Add(ids)
 }

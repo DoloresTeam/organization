@@ -27,12 +27,12 @@ func (rbacx *RBACX) Add(roles []*Role) {
 	}
 }
 
-func (rbacx *RBACX) Remove(roles []*Role) {
+func (rbacx *RBACX) Remove(ids []string) {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()
 
-	for _, r := range roles {
-		delete(rbacx.roles, r.ID)
+	for _, id := range ids {
+		delete(rbacx.roles, id)
 	}
 }
 
@@ -46,63 +46,48 @@ func (rbacx *RBACX) RoleByID(id string) (*Role, error) {
 	return nil, fmt.Errorf(`not found role id: %s`, id)
 }
 
-func (rbacx *RBACX) PermissionByID(id string) (*Permission, error) {
+func (rbacx *RBACX) PermissionByID(id string, isUnit bool) (*Permission, error) {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()
 
 	for _, role := range rbacx.roles {
-		for _, p := range role.permissions {
-			if p.ID == id {
-				return p, nil
+		if isUnit {
+			for _, p := range role.unitPermissions {
+				if p.ID == id {
+					return p, nil
+				}
+			}
+		} else {
+			for _, p := range role.personPermissions {
+				if p.ID == id {
+					return p, nil
+				}
 			}
 		}
 	}
+
 	return nil, fmt.Errorf(`not found permission id: %s`, id)
 }
 
-func (rbacx *RBACX) HasRefrenceType(id string, isUnit bool) string {
-	for _, role := range rbacx.roles {
-		for _, p := range role.permissions {
-			if isUnit {
-				if p.unitTypes.Contains(id) {
-					return p.ID
-				}
-			} else {
-				if p.personTypes.Contains(id) {
-					return p.ID
-				}
-			}
-		}
-	}
-	return ``
-}
-
-func (rbacx *RBACX) MatchedTypes(roleIDs []string) (unitTypes []string, personTypes []string) {
+func (rbacx *RBACX) MatchedTypes(roleIDs []string, isUnit bool) []string {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()
 
-	unit := mapset.NewSet()
-	person := mapset.NewSet()
+	set := mapset.NewSet()
 
 	for _, id := range roleIDs {
 		if role, ok := rbacx.roles[id]; ok {
-			u, p := role.matchedTypes()
-			unit = unit.Union(u)
-			person = person.Union(p)
+			set = set.Union(role.matchedTypes(isUnit))
 		} else {
 			fmt.Printf(`[Warning-rbacx] cant't find role: %s, please add this role`, id)
 		}
 	}
 
-	uit := unit.Iterator()
-	for t := range uit.C {
-		unitTypes = append(unitTypes, t.(string))
+	var types []string
+	it := set.Iterator()
+	for t := range it.C {
+		types = append(types, t.(string))
 	}
 
-	pit := person.Iterator()
-	for t := range pit.C {
-		personTypes = append(personTypes, t.(string))
-	}
-
-	return unitTypes, personTypes
+	return types
 }
