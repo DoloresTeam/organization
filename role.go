@@ -126,7 +126,6 @@ func (org *Organization) RoleByPermission(oid string, isUnit bool) ([]string, er
 	}
 
 	return ids, nil
-
 }
 
 func (org *Organization) convertIDToObject(ids []string, isUnit bool) ([]*gorbacx.Permission, error) {
