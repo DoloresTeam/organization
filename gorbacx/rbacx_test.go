@@ -2,6 +2,12 @@ package gorbacx
 
 import "testing"
 
+func TestPrettyPrint(t *testing.T) {
+
+	rbacx := rbacx()
+	rbacx.PrettyPrint()
+}
+
 func TestMatch(t *testing.T) {
 
 	//define Permission

@@ -91,3 +91,18 @@ func (rbacx *RBACX) MatchedTypes(roleIDs []string, isUnit bool) []string {
 
 	return types
 }
+
+func (rbacx *RBACX) PrettyPrint() {
+	fmt.Println(`rbacx PrettyPrint Begin`)
+	for _, role := range rbacx.roles {
+		fmt.Println(`----------------------`)
+		for _, v := range role.unitPermissions {
+			fmt.Println(v.ID, v.types)
+		}
+		fmt.Println(`~~~~~~~~~~~~~~~~~~~~~~~`)
+		for _, v := range role.personPermissions {
+			fmt.Println(v.ID, v.types)
+		}
+	}
+	fmt.Println(`rbacx PrettyPrint End`)
+}

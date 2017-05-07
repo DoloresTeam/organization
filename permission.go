@@ -3,8 +3,6 @@ package organization
 import (
 	"fmt"
 
-	"github.com/DoloresTeam/organization/gorbacx"
-
 	ldap "gopkg.in/ldap.v2"
 )
 
@@ -88,24 +86,14 @@ func (org *Organization) PermissionByType(dtype string, isUnit bool) ([]string, 
 	return ids, nil
 }
 
-func (org *Organization) PermissionByID(oid string, isUnit bool) (*gorbacx.Permission, error) {
-	sq := ldap.NewSearchRequest(org.parentDN(permissionCategory(isUnit)),
-		ldap.ScopeSingleLevel,
-		ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf(`(oid=%s)`, oid),
-		[]string{`oid`, `rbacType`}, nil)
-
-	sr, err := org.l.Search(sq)
-	if err != nil || len(sr.Entries) != 1 {
-		return nil, err
-	}
-
-	entry := sr.Entries[0]
-	p := gorbacx.NewPermission(oid, entry.GetAttributeValues(`rbacType`))
-
-	return p, nil
-}
-
 func (org *Organization) AllPermissions(isUnit bool) ([]map[string]interface{}, error) {
 	return org.search(org.permissionSC(``, isUnit))
+}
+
+func (org *Organization) PermissionByIDs(ids []string, isUnit bool) ([]map[string]interface{}, error) {
+	filter, err := scConvertIDsToFilter(ids)
+	if err != nil {
+		return nil, err
+	}
+	return org.search(org.permissionSC(filter, isUnit))
 }

@@ -155,18 +155,23 @@ func (org *Organization) RoleByPermission(oid string, isUnit bool) ([]string, er
 func (org *Organization) convertIDToObject(ids []string, isUnit bool) ([]*gorbacx.Permission, error) {
 
 	var objects []*gorbacx.Permission // 权限有效性判断
+
 	for _, id := range ids {
-		p, _ := org.rbacx.PermissionByID(id, true)
+		p, _ := org.rbacx.PermissionByID(id, isUnit)
 		if p != nil {
 			objects = append(objects, p)
 		} else {
-			p, err := org.PermissionByID(id, true) // 从服务器获取
-			if p == nil {
-				return nil, err
+			infos, _ := org.PermissionByIDs([]string{id}, isUnit)
+			if len(infos) != 1 {
+				return nil, fmt.Errorf(`convert failed no this permission info id: %s`, id)
 			}
-			objects = append(objects, p)
+			objects = append(objects, permissionWithLDAP(infos[0]))
 		}
 	}
 
 	return objects, nil
+}
+
+func permissionWithLDAP(info map[string]interface{}) *gorbacx.Permission {
+	return gorbacx.NewPermission(info[`id`].(string), info[`types`].([]string))
 }

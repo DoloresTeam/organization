@@ -25,7 +25,10 @@ func NewOrganization(subffix string, ldapBindConn *ldap.Conn) (*Organization, er
 
 	// TODO 验证ldap 的目录结构
 	org := &Organization{ldapBindConn, gorbacx.New(), subffix}
-	org.initial()
+	err := org.initial()
+	if err != nil {
+		return nil, err
+	}
 
 	return org, nil
 }
@@ -45,6 +48,27 @@ func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port i
 	return NewOrganization(subffix, l)
 }
 
-func (org *Organization) initial() {
+func (org *Organization) initial() error {
 
+	rs, err := org.AllRoles()
+	if err != nil {
+		return err
+	}
+
+	var roles []*gorbacx.Role
+	for _, v := range rs {
+		ups, err := org.convertIDToObject(v[`unitPermissionIDs`].([]string), true)
+		if err != nil {
+			return err
+		}
+		pps, err := org.convertIDToObject(v[`personPermissionIDs`].([]string), false)
+		if err != nil {
+			return err
+		}
+		roles = append(roles, gorbacx.NewRole(v[`id`].(string), ups, pps))
+	}
+
+	org.rbacx.Add(roles)
+
+	return nil
 }
