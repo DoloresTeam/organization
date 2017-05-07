@@ -117,28 +117,38 @@ func (org *Organization) RoleByIDs(ids []string) ([]map[string]interface{}, erro
 }
 
 func (org *Organization) RoleByPermission(oid string, isUnit bool) ([]string, error) {
+
 	var filter string
 	if isUnit {
 		filter = fmt.Sprintf(`(upid=%s)`, oid)
 	} else {
 		filter = fmt.Sprintf(`(ppid=%s)`, oid)
 	}
-	sq := ldap.NewSearchRequest(org.parentDN(ROLE),
-		ldap.ScopeSingleLevel,
-		ldap.NeverDerefAliases, 0, 0, false,
-		filter,
-		[]string{`oid`}, nil)
 
-	sr, err := org.l.Search(sq)
+	sc := &SearchCondition{
+		DN:         org.parentDN(ROLE),
+		Filter:     filter,
+		Attributes: []string{`oid`},
+		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
+			var roles []map[string]interface{}
+			for _, e := range sr.Entries {
+				roles = append(roles, map[string]interface{}{
+					`id`: e.GetAttributeValue(`oid`),
+				})
+			}
+			return roles
+		},
+	}
+
+	roles, err := org.search(sc)
 	if err != nil {
 		return nil, err
 	}
 
 	var ids []string
-	for _, entry := range sr.Entries {
-		ids = append(ids, entry.GetAttributeValue(`oid`))
+	for _, v := range roles {
+		ids = append(ids, v[`id`].(string))
 	}
-
 	return ids, nil
 }
 
