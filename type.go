@@ -49,27 +49,14 @@ func (org *Organization) DelType(oid string, isUnit bool) error {
 	return org.l.Del(dq)
 }
 
-func (org *Organization) AllTypes(isUnit bool) ([]map[string]interface{}, error) {
+func (org *Organization) AllType(isUnit bool) ([]map[string]interface{}, error) {
+	return org.search(org.typeSC(``, isUnit))
+}
 
-	sq := ldap.NewSearchRequest(org.parentDN(typeCategory(isUnit)),
-		ldap.ScopeSingleLevel,
-		ldap.NeverDerefAliases, 0, 0, false,
-		`(objectClass=doloresType)`,
-		[]string{`oid`, `cn`, `description`}, nil)
-
-	sr, err := org.l.Search(sq)
+func (org *Organization) TypeByIDs(ids []string, isUnit bool) ([]map[string]interface{}, error) {
+	filter, err := scConvertIDsToFilter(ids)
 	if err != nil {
 		return nil, err
 	}
-
-	var types []map[string]interface{}
-	for _, e := range sr.Entries {
-		types = append(types, map[string]interface{}{
-			`id`:          e.GetAttributeValue(`objectIdentifier`),
-			`name`:        e.GetAttributeValue(`cn`),
-			`description`: e.GetAttributeValue(`description`),
-		})
-	}
-
-	return types, nil
+	return org.search(org.typeSC(filter, isUnit))
 }

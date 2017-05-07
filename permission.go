@@ -107,27 +107,5 @@ func (org *Organization) PermissionByID(oid string, isUnit bool) (*gorbacx.Permi
 }
 
 func (org *Organization) AllPermissions(isUnit bool) ([]map[string]interface{}, error) {
-
-	sq := ldap.NewSearchRequest(org.parentDN(permissionCategory(isUnit)),
-		ldap.ScopeSingleLevel,
-		ldap.NeverDerefAliases, 0, 0, false,
-		`(objectClass=permission)`,
-		[]string{`oid`, `cn`, `description`, `rbacType`}, nil)
-
-	sr, err := org.l.Search(sq)
-	if err != nil {
-		return nil, err
-	}
-
-	var types []map[string]interface{}
-	for _, e := range sr.Entries {
-		types = append(types, map[string]interface{}{
-			`id`:          e.GetAttributeValue(`objectIdentifier`),
-			`name`:        e.GetAttributeValue(`cn`),
-			`description`: e.GetAttributeValue(`description`),
-			`types`:       e.GetAttributeValues(`rbacType`),
-		})
-	}
-
-	return types, nil
+	return org.search(org.permissionSC(``, isUnit))
 }

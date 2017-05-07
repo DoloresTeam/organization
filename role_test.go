@@ -21,6 +21,10 @@ func TestAddRole(t *testing.T) {
 
 func TestFilterRole(t *testing.T) {
 
+	if testing.Short() {
+		t.SkipNow()
+	}
+
 	org, err := neworg()
 	if err != nil {
 		t.Fatal(err)

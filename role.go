@@ -103,52 +103,17 @@ func (org *Organization) ModifyRole(oid, name, description string, ups, pps []st
 }
 
 func (org *Organization) AllRoles() ([]map[string]interface{}, error) {
-	return org.filterRole(`(objectClass=role)`)
+	return org.search(org.roleSC(``))
 }
 
 func (org *Organization) RoleByIDs(ids []string) ([]map[string]interface{}, error) {
 
-	filter := `(|(objectClass=role)`
-
-	for _, id := range ids {
-		filter = filter + fmt.Sprintf(`(oid=%s)`, id)
-	}
-
-	filter = filter + `)`
-
-	return org.filterRole(filter)
-}
-
-func (org *Organization) filterRole(filter string) ([]map[string]interface{}, error) {
-
-	sq := ldap.NewSearchRequest(org.parentDN(ROLE),
-		ldap.ScopeSingleLevel,
-		ldap.NeverDerefAliases, 0, 0, false,
-		filter,
-		[]string{`oid`, `cn`, `description`, `upid`, `ppid`}, nil)
-
-	sr, err := org.l.Search(sq)
+	filter, err := scConvertIDsToFilter(ids)
 	if err != nil {
 		return nil, err
 	}
 
-	return convertRoleSearchResult(sr), nil
-}
-
-func convertRoleSearchResult(sr *ldap.SearchResult) []map[string]interface{} {
-
-	var roles []map[string]interface{}
-	for _, e := range sr.Entries {
-		roles = append(roles, map[string]interface{}{
-			`id`:                  e.GetAttributeValue(`objectIdentifier`),
-			`name`:                e.GetAttributeValue(`cn`),
-			`description`:         e.GetAttributeValue(`description`),
-			`unitPermissionIDs`:   e.GetAttributeValues(`unitpermissionIdentifier`),
-			`personPermissionIDs`: e.GetAttributeValues(`personpermissionIdentifier`),
-		})
-	}
-
-	return roles
+	return org.search(org.roleSC(filter))
 }
 
 func (org *Organization) RoleByPermission(oid string, isUnit bool) ([]string, error) {

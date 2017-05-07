@@ -37,15 +37,16 @@ func TestAllTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = org.AllTypes(false)
+	_, err = org.AllType(false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	types, err := org.AllTypes(true)
+	types, err := org.TypeByIDs([]string{`b46otklhfpcs0pe51am0`, `b46otklhfpcs0pe51am0`}, true)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(`fileter id:b46otklhfpcs0pe51am0 b46otklhfpcs0pe51am0`)
 	for _, ty := range types {
 		t.Log(ty)
 	}
