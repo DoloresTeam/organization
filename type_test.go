@@ -42,9 +42,12 @@ func TestAllTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = org.AllTypes(true)
+	types, err := org.AllTypes(true)
 	if err != nil {
 		t.Fatal(err)
+	}
+	for _, ty := range types {
+		t.Log(ty)
 	}
 }
 

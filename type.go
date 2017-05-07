@@ -49,7 +49,7 @@ func (org *Organization) DelType(oid string, isUnit bool) error {
 	return org.l.Del(dq)
 }
 
-func (org *Organization) AllTypes(isUnit bool) (*ldap.SearchResult, error) {
+func (org *Organization) AllTypes(isUnit bool) ([]map[string]interface{}, error) {
 
 	sq := ldap.NewSearchRequest(org.parentDN(typeCategory(isUnit)),
 		ldap.ScopeSingleLevel,
@@ -57,5 +57,19 @@ func (org *Organization) AllTypes(isUnit bool) (*ldap.SearchResult, error) {
 		`(objectClass=doloresType)`,
 		[]string{`oid`, `cn`, `description`}, nil)
 
-	return org.l.Search(sq)
+	sr, err := org.l.Search(sq)
+	if err != nil {
+		return nil, err
+	}
+
+	var types []map[string]interface{}
+	for _, e := range sr.Entries {
+		types = append(types, map[string]interface{}{
+			`id`:          e.GetAttributeValue(`objectIdentifier`),
+			`name`:        e.GetAttributeValue(`cn`),
+			`description`: e.GetAttributeValue(`description`),
+		})
+	}
+
+	return types, nil
 }

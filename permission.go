@@ -71,7 +71,7 @@ func (org *Organization) DelPermission(oid string, isUnit bool) error {
 func (org *Organization) PermissionByType(dtype string, isUnit bool) ([]string, error) {
 	sq := ldap.NewSearchRequest(org.parentDN(permissionCategory(isUnit)),
 		ldap.ScopeSingleLevel,
-		ldap.NeverDerefAliases, 0, 0, false,
+		ldap.DerefAlways, 0, 0, false,
 		fmt.Sprintf(`(rbacType=%s)`, dtype),
 		[]string{`oid`}, nil)
 
@@ -104,4 +104,30 @@ func (org *Organization) PermissionByID(oid string, isUnit bool) (*gorbacx.Permi
 	p := gorbacx.NewPermission(oid, entry.GetAttributeValues(`rbacType`))
 
 	return p, nil
+}
+
+func (org *Organization) AllPermissions(isUnit bool) ([]map[string]interface{}, error) {
+
+	sq := ldap.NewSearchRequest(org.parentDN(permissionCategory(isUnit)),
+		ldap.ScopeSingleLevel,
+		ldap.NeverDerefAliases, 0, 0, false,
+		`(objectClass=permission)`,
+		[]string{`oid`, `cn`, `description`, `rbacType`}, nil)
+
+	sr, err := org.l.Search(sq)
+	if err != nil {
+		return nil, err
+	}
+
+	var types []map[string]interface{}
+	for _, e := range sr.Entries {
+		types = append(types, map[string]interface{}{
+			`id`:          e.GetAttributeValue(`objectIdentifier`),
+			`name`:        e.GetAttributeValue(`cn`),
+			`description`: e.GetAttributeValue(`description`),
+			`types`:       e.GetAttributeValues(`rbacType`),
+		})
+	}
+
+	return types, nil
 }
