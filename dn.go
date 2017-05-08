@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	PERSON           = 0
-	ROLE             = 1
-	UNITPERSIMISSON  = 2
-	PERSONPERMISSION = 3
-	UNITTYPE         = 4
-	PERSONTYPE       = 5
-	UNIT             = 6
+	person           = 0
+	role             = 1
+	unitPermission   = 2
+	personPermission = 3
+	unitType         = 4
+	personType       = 5
+	unit             = 6
 )
 
 func (org *Organization) dn(oid string, category int) string {
@@ -27,19 +27,19 @@ func (org *Organization) parentDN(category int) string {
 	baseDN := org.subffix
 
 	switch category {
-	case PERSON:
+	case person:
 		baseDN = godn.Person(org.subffix)
-	case ROLE:
+	case role:
 		baseDN = godn.Role(org.subffix)
-	case UNITPERSIMISSON:
+	case unitPermission:
 		baseDN = godn.Permission(org.subffix, true)
-	case PERSONPERMISSION:
+	case personPermission:
 		baseDN = godn.Permission(org.subffix, false)
-	case UNITTYPE:
+	case unitType:
 		baseDN = godn.DoloresType(org.subffix, true)
-	case PERSONTYPE:
+	case personType:
 		baseDN = godn.DoloresType(org.subffix, false)
-	case UNIT:
+	case unit:
 		baseDN = godn.Unit(org.subffix)
 	}
 
@@ -48,16 +48,16 @@ func (org *Organization) parentDN(category int) string {
 
 func typeCategory(isUnit bool) int {
 	if isUnit {
-		return UNITTYPE
+		return unitType
 	}
-	return PERSONTYPE
+	return personType
 }
 
 func permissionCategory(isUnit bool) int {
 	if isUnit {
-		return UNITPERSIMISSON
+		return unitPermission
 	}
-	return PERSONPERMISSION
+	return personPermission
 }
 
 func generatorOID() string {

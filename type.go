@@ -6,6 +6,7 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
+// AddType desgined to add a new dolresType
 func (org *Organization) AddType(name, description string, isUnit bool) error {
 
 	dn := org.dn(generatorOID(), typeCategory(isUnit))
@@ -18,6 +19,7 @@ func (org *Organization) AddType(name, description string, isUnit bool) error {
 	return org.l.Add(aq)
 }
 
+// ModifyType update name or description of doloresType
 func (org *Organization) ModifyType(oid string, name, description string, isUnit bool) error {
 
 	dn := org.dn(generatorOID(), typeCategory(isUnit))
@@ -33,6 +35,7 @@ func (org *Organization) ModifyType(oid string, name, description string, isUnit
 	return org.l.Modify(mq)
 }
 
+// DelType by id
 func (org *Organization) DelType(oid string, isUnit bool) error {
 
 	pids, err := org.PermissionByType(oid, isUnit)
@@ -49,10 +52,12 @@ func (org *Organization) DelType(oid string, isUnit bool) error {
 	return org.l.Del(dq)
 }
 
+// AllType in ldap server
 func (org *Organization) AllType(isUnit bool) ([]map[string]interface{}, error) {
 	return org.search(org.typeSC(``, isUnit))
 }
 
+// TypeByIDs ...
 func (org *Organization) TypeByIDs(ids []string, isUnit bool) ([]map[string]interface{}, error) {
 	filter, err := scConvertIDsToFilter(ids)
 	if err != nil {

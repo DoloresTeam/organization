@@ -6,6 +6,7 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
+// AddPermission to ldap server
 func (org *Organization) AddPermission(name, description string, types []string, isUnit bool) error {
 
 	dn := org.dn(generatorOID(), permissionCategory(isUnit))
@@ -20,6 +21,7 @@ func (org *Organization) AddPermission(name, description string, types []string,
 	return org.l.Add(aq)
 }
 
+// ModifyPermission in ldap
 func (org *Organization) ModifyPermission(oid, name, description string, types []string, isUnit bool) error {
 
 	dn := org.dn(oid, permissionCategory(isUnit))
@@ -49,6 +51,7 @@ func (org *Organization) ModifyPermission(oid, name, description string, types [
 	return nil
 }
 
+// DelPermission in ldap
 func (org *Organization) DelPermission(oid string, isUnit bool) error {
 
 	rids, err := org.RoleByPermission(oid, isUnit)
@@ -60,12 +63,13 @@ func (org *Organization) DelPermission(oid string, isUnit bool) error {
 		return fmt.Errorf(`has role reference this permission %s`, rids)
 	}
 
-	dn := org.dn(oid, ROLE)
+	dn := org.dn(oid, role)
 	dq := ldap.NewDelRequest(dn, nil)
 
 	return org.l.Del(dq)
 }
 
+// PermissionByType all permission which contain this dolorestype
 func (org *Organization) PermissionByType(dtype string, isUnit bool) ([]string, error) {
 	sq := ldap.NewSearchRequest(org.parentDN(permissionCategory(isUnit)),
 		ldap.ScopeSingleLevel,
@@ -86,10 +90,12 @@ func (org *Organization) PermissionByType(dtype string, isUnit bool) ([]string, 
 	return ids, nil
 }
 
+// AllPermissions in ldap
 func (org *Organization) AllPermissions(isUnit bool) ([]map[string]interface{}, error) {
 	return org.search(org.permissionSC(``, isUnit))
 }
 
+// PermissionByIDs in ldap
 func (org *Organization) PermissionByIDs(ids []string, isUnit bool) ([]map[string]interface{}, error) {
 	filter, err := scConvertIDsToFilter(ids)
 	if err != nil {

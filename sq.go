@@ -17,6 +17,7 @@ func (org *Organization) search(sc *SearchCondition) ([]map[string]interface{}, 
 	return sc.Convertor(sr), nil
 }
 
+// SearchCondition desgin to constrctor search request
 type SearchCondition struct {
 	DN         string
 	Filter     string
@@ -57,7 +58,7 @@ func (org *Organization) typeSC(filter string, isUnit bool) *SearchCondition {
 
 func (org *Organization) roleSC(filter string) *SearchCondition {
 	return &SearchCondition{
-		DN:         org.parentDN(ROLE),
+		DN:         org.parentDN(role),
 		Filter:     fmt.Sprintf(`(&(objectClass=role)%s)`, filter),
 		Attributes: []string{`oid`, `cn`, `description`, `upid`, `ppid`},
 		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {

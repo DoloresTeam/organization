@@ -9,14 +9,14 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-var UnimplementError = errors.New(`THIS FEATURE UNIMPLEMENT !!`)
-
+// Organization ldap operation handler
 type Organization struct {
 	l       *ldap.Conn
 	rbacx   *gorbacx.RBACX
 	subffix string
 }
 
+// NewOrganization ...
 func NewOrganization(subffix string, ldapBindConn *ldap.Conn) (*Organization, error) {
 
 	if len(subffix) == 0 || ldapBindConn == nil {
@@ -33,6 +33,7 @@ func NewOrganization(subffix string, ldapBindConn *ldap.Conn) (*Organization, er
 	return org, nil
 }
 
+// NewOrganizationWithSimpleBind ...
 func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port int) (*Organization, error) {
 
 	l, err := ldap.Dial(`tcp`, fmt.Sprintf(`%s:%d`, host, port))

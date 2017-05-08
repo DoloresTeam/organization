@@ -13,7 +13,7 @@ func TestSearchPermission(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = org.PermissionByType(`b45v085hfpcidvk1m8fg`, true)
+	_, _ = org.PermissionByType(`b45v085hfpcidvk1m8fg`, true)
 }
 
 func TestAddPermission(t *testing.T) {

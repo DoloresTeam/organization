@@ -7,6 +7,7 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
+// AddRole to ldap server, this method will automatically update org's rbacx
 func (org *Organization) AddRole(name, description string, ups, pps []string) error {
 
 	upObjects, err := org.convertIDToObject(ups, true)
@@ -19,7 +20,7 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) er
 	}
 
 	oid := generatorOID()
-	dn := org.dn(oid, ROLE)
+	dn := org.dn(oid, role)
 	aq := ldap.NewAddRequest(dn)
 
 	aq.Attribute(`objectClass`, []string{`role`, `top`})
@@ -40,9 +41,10 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) er
 	return nil
 }
 
+// RemoveRole from ldap server, automatically update org's rbacx
 func (org *Organization) RemoveRole(oid string) error {
 
-	dn := org.dn(oid, ROLE)
+	dn := org.dn(oid, role)
 	dq := ldap.NewDelRequest(dn, nil)
 
 	err := org.l.Del(dq)
@@ -55,6 +57,7 @@ func (org *Organization) RemoveRole(oid string) error {
 	return nil
 }
 
+// ModifyRole in ldap server, automatically update org's rbacx
 func (org *Organization) ModifyRole(oid, name, description string, ups, pps []string) error {
 
 	upObjects, err := org.convertIDToObject(ups, true)
@@ -66,7 +69,7 @@ func (org *Organization) ModifyRole(oid, name, description string, ups, pps []st
 		return err
 	}
 
-	dn := org.dn(oid, ROLE)
+	dn := org.dn(oid, role)
 	mq := ldap.NewModifyRequest(dn)
 
 	if len(name) > 0 {
@@ -102,10 +105,12 @@ func (org *Organization) ModifyRole(oid, name, description string, ups, pps []st
 	return nil
 }
 
+// AllRoles in ldap
 func (org *Organization) AllRoles() ([]map[string]interface{}, error) {
 	return org.search(org.roleSC(``))
 }
 
+// RoleByIDs in ldap
 func (org *Organization) RoleByIDs(ids []string) ([]map[string]interface{}, error) {
 
 	filter, err := scConvertIDsToFilter(ids)
@@ -116,6 +121,7 @@ func (org *Organization) RoleByIDs(ids []string) ([]map[string]interface{}, erro
 	return org.search(org.roleSC(filter))
 }
 
+// RoleByPermission which role contain this permission
 func (org *Organization) RoleByPermission(oid string, isUnit bool) ([]string, error) {
 
 	var filter string
@@ -126,7 +132,7 @@ func (org *Organization) RoleByPermission(oid string, isUnit bool) ([]string, er
 	}
 
 	sc := &SearchCondition{
-		DN:         org.parentDN(ROLE),
+		DN:         org.parentDN(role),
 		Filter:     filter,
 		Attributes: []string{`oid`},
 		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
