@@ -8,11 +8,11 @@ import (
 )
 
 // AddUnit to ldap
-func (org *Organization) AddUnit(parentID, name, description, utypeID string) error {
+func (org *Organization) AddUnit(parentID, name, description, utypeID string, info map[string][]string) error {
 
 	// 验证参数有效性
 	if len(name) == 0 {
-		return errors.New(`unit name must be not nil`)
+		return errors.New(`unit name must be not empty`)
 	}
 
 	// 部门类型是不是正确
@@ -21,6 +21,8 @@ func (org *Organization) AddUnit(parentID, name, description, utypeID string) er
 		if len(ts) != 1 {
 			return errors.New(`invalid utype`)
 		}
+	} else {
+		return errors.New(`utypeID must be not empty`)
 	}
 
 	oid := generatorOID()
@@ -29,7 +31,7 @@ func (org *Organization) AddUnit(parentID, name, description, utypeID string) er
 	if len(parentID) == 0 {
 		dn = org.dn(oid, unit)
 	} else {
-		_, err := org.UnitByID(parentID)
+		_, err := org.UnitByIDs([]string{parentID})
 		if err != nil {
 			return errors.New(`parent must be not nil`)
 		}
@@ -50,23 +52,21 @@ func (org *Organization) AddUnit(parentID, name, description, utypeID string) er
 	return org.l.Add(aq)
 }
 
-// UnitByID ...
-func (org *Organization) UnitByID(id string) (map[string]interface{}, error) {
+// UnitByIDs ...
+func (org *Organization) UnitByIDs(ids []string) ([]map[string]interface{}, error) {
 
-	if len(id) == 0 {
-		return nil, errors.New(`id must be not empty`)
+	filter, err := scConvertIDsToFilter(ids)
+	if err != nil {
+		return nil, err
 	}
 
-	result, err := org.search(org.unitSC(fmt.Sprintf(`(oid=%s)`, id), mapper{
+	result, err := org.search(org.unitSC(filter, mapper{
 		`ou`: `name`,
 	}))
 
 	if err != nil {
 		return nil, err
 	}
-	if len(result) == 1 {
-		return result[0], nil
-	}
 
-	return nil, errors.New(`404 Not Found`)
+	return result, nil
 }

@@ -13,7 +13,7 @@ func TestAddRole(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = org.AddRole(`Role1`, `Test add Role 1`, []string{`b46rr2thfpcik527pgm0`}, []string{`b46rr2thfpcik527pgmg`})
+	err = org.AddRole(`Role1`, `Test add Role 1`, []string{`b49bkndhfpcvt8ri2j8g`}, []string{`b49bkndhfpcvt8ri2j90`})
 	if err != nil {
 		t.Fatal(err)
 	}

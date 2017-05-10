@@ -1,6 +1,7 @@
 package organization
 
 import (
+	"errors"
 	"fmt"
 
 	ldap "gopkg.in/ldap.v2"
@@ -8,6 +9,11 @@ import (
 
 // AddPermission to ldap server
 func (org *Organization) AddPermission(name, description string, types []string, isUnit bool) error {
+
+	ts, _ := org.TypeByIDs(types, isUnit)
+	if len(ts) != len(types) {
+		return errors.New(`invalid types`)
+	}
 
 	dn := org.dn(generatorOID(), permissionCategory(isUnit))
 	aq := ldap.NewAddRequest(dn)

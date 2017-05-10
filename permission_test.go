@@ -27,12 +27,12 @@ func TestAddPermission(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = org.AddPermission(`Test`, `This is Test Permission`, []string{`1`, `2`}, true)
+	err = org.AddPermission(`Test`, `This is Test Permission`, []string{`b49961dhfpcuhne4dvkg`, `b49bk6dhfpcvsehgvm1g`}, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = org.AddPermission(`Test`, `This is Test Permission`, []string{`1`, `2`}, false)
+	err = org.AddPermission(`Test`, `This is Test Permission`, []string{`b49961dhfpcuhne4dvl0`, `b49bk6dhfpcvsehgvm20`}, false)
 	if err != nil {
 		t.Fatal(err)
 	}

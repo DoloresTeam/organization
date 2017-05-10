@@ -14,7 +14,7 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) er
 	if err != nil {
 		return err
 	}
-	ppObjects, err := org.convertIDToObject(pps, true)
+	ppObjects, err := org.convertIDToObject(pps, false)
 	if err != nil {
 		return err
 	}

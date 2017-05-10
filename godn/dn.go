@@ -30,5 +30,5 @@ func Person(subffix string) string {
 
 // Unit base DN
 func Unit(subffix string) string {
-	return fmt.Sprintf(`oid=1,ou=unit, %s`, subffix) // TODO 后续支持多公司
+	return fmt.Sprintf(`o=1,ou=unit, %s`, subffix) // TODO 后续支持多公司
 }
