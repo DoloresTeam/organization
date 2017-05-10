@@ -8,22 +8,7 @@ import (
 )
 
 // AddUnit to ldap
-func (org *Organization) AddUnit(parentID, name, description, utypeID string, info map[string][]string) error {
-
-	// 验证参数有效性
-	if len(name) == 0 {
-		return errors.New(`unit name must be not empty`)
-	}
-
-	// 部门类型是不是正确
-	if len(utypeID) > 0 {
-		ts, _ := org.TypeByIDs([]string{utypeID}, true)
-		if len(ts) != 1 {
-			return errors.New(`invalid utype`)
-		}
-	} else {
-		return errors.New(`utypeID must be not empty`)
-	}
+func (org *Organization) AddUnit(parentID string, info map[string][]string) error {
 
 	id := generatorID()
 
@@ -40,13 +25,10 @@ func (org *Organization) AddUnit(parentID, name, description, utypeID string, in
 
 	aq := ldap.NewAddRequest(dn)
 
-	aq.Attribute(`objectClass`, []string{`organizationalUnit`, `unitExtended`, `top`})
-	aq.Attribute(`ou`, []string{name})
-	if len(description) > 0 {
-		aq.Attribute(`description`, []string{description})
-	}
-	if len(utypeID) > 0 {
-		aq.Attribute(`rbacType`, []string{utypeID})
+	aq.Attribute(`objectClass`, []string{`organizationalUnit`, `unit`, `top`})
+
+	for k, v := range info {
+		aq.Attribute(k, v)
 	}
 
 	return org.l.Add(aq)

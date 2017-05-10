@@ -20,14 +20,19 @@ func TestUnitByID(t *testing.T) {
 
 func TestAddUnit(t *testing.T) {
 
-	if testing.Short() {
-		t.SkipNow()
-	}
+	// if testing.Short() {
+	// 	t.SkipNow()
+	// }
 
 	org, _ := neworg()
 
-	e := org.AddUnit(`b4996cdhfpcuikevr1lg`, `Test`, `Test add unit on parent`, `b49961dhfpcuhne4dvkg`, nil)
-	if e != nil {
-		t.Fatal(e)
+	err := org.AddUnit(``, map[string][]string{
+		`ou`:          []string{`Test`},
+		`description`: []string{`This is test unit's description`},
+		`rbacType`:    []string{`b49jtn06h301mgko5jng`},
+	})
+
+	if err != nil {
+		t.Fatal(err)
 	}
 }
