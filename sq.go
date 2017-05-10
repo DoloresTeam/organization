@@ -52,7 +52,7 @@ func newLDAPMapper(m mapper) *ldapMapper {
 }
 
 func (lm *ldapMapper) attributes() []string {
-	return append(lm.keys, `oid`)
+	return append(lm.keys, `id`)
 }
 
 func (lm *ldapMapper) mapEntries(sr *ldap.SearchResult) []map[string]interface{} {
@@ -99,12 +99,12 @@ func (org *Organization) typeSC(filter string, isUnit bool) *SearchCondition {
 	return &SearchCondition{
 		DN:         org.parentDN(typeCategory(isUnit)),
 		Filter:     filter,
-		Attributes: []string{`entryUUID`, `cn`, `description`},
+		Attributes: []string{`id`, `cn`, `description`},
 		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
 			var types []map[string]interface{}
 			for _, e := range sr.Entries {
 				types = append(types, map[string]interface{}{
-					`id`:          e.GetAttributeValue(`entryUUID`),
+					`id`:          e.GetAttributeValue(`id`),
 					`name`:        e.GetAttributeValue(`cn`),
 					`description`: e.GetAttributeValue(`description`),
 				})
@@ -118,17 +118,17 @@ func (org *Organization) roleSC(filter string) *SearchCondition {
 	return &SearchCondition{
 		DN:         org.parentDN(role),
 		Filter:     fmt.Sprintf(`(&(objectClass=role)%s)`, filter),
-		Attributes: []string{`oid`, `cn`, `description`, `upid`, `ppid`},
+		Attributes: []string{`id`, `cn`, `description`, `upid`, `ppid`},
 		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
 
 			var roles []map[string]interface{}
 			for _, e := range sr.Entries {
 				roles = append(roles, map[string]interface{}{
-					`id`:                  e.GetAttributeValue(`objectIdentifier`),
+					`id`:                  e.GetAttributeValue(`id`),
 					`name`:                e.GetAttributeValue(`cn`),
 					`description`:         e.GetAttributeValue(`description`),
 					`unitPermissionIDs`:   e.GetAttributeValues(`unitpermissionIdentifier`),
-					`personPermissionIDs`: e.GetAttributeValues(`personpermissionIdentifier`),
+					`memberPermissionIDs`: e.GetAttributeValues(`memberpermissionIdentifier`),
 				})
 			}
 
@@ -146,7 +146,7 @@ func (org *Organization) permissionSC(filter string, isUnit bool) *SearchConditi
 	return &SearchCondition{
 		DN:         org.parentDN(permissionCategory(isUnit)),
 		Filter:     filter,
-		Attributes: []string{`oid`, `cn`, `description`, `rbacType`},
+		Attributes: []string{`id`, `cn`, `description`, `rbacType`},
 		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
 			var types []map[string]interface{}
 			for _, e := range sr.Entries {
@@ -187,7 +187,7 @@ func scConvertIDsToFilter(ids []string) (string, error) {
 
 	filter := `(|`
 	for _, id := range ids {
-		filter += fmt.Sprintf(`(oid=%s)`, id)
+		filter += fmt.Sprintf(`(id=%s)`, id)
 	}
 	filter += `)`
 

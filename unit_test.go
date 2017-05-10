@@ -20,9 +20,9 @@ func TestUnitByID(t *testing.T) {
 
 func TestAddUnit(t *testing.T) {
 
-	// if testing.Short() {
-	// 	t.SkipNow()
-	// }
+	if testing.Short() {
+		t.SkipNow()
+	}
 
 	org, _ := neworg()
 

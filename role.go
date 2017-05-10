@@ -19,8 +19,8 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) er
 		return err
 	}
 
-	oid := generatorOID()
-	dn := org.dn(oid, role)
+	id := generatorID()
+	dn := org.dn(id, role)
 	aq := ldap.NewAddRequest(dn)
 
 	aq.Attribute(`objectClass`, []string{`role`, `top`})
@@ -35,16 +35,16 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) er
 		return err
 	}
 
-	role := gorbacx.NewRole(oid, upObjects, ppObjects)
+	role := gorbacx.NewRole(id, upObjects, ppObjects)
 	org.rbacx.Add([]*gorbacx.Role{role})
 
 	return nil
 }
 
 // RemoveRole from ldap server, automatically update org's rbacx
-func (org *Organization) RemoveRole(oid string) error {
+func (org *Organization) RemoveRole(id string) error {
 
-	dn := org.dn(oid, role)
+	dn := org.dn(id, role)
 	dq := ldap.NewDelRequest(dn, nil)
 
 	err := org.l.Del(dq)
@@ -52,13 +52,13 @@ func (org *Organization) RemoveRole(oid string) error {
 		return err
 	}
 
-	org.rbacx.Remove([]string{oid})
+	org.rbacx.Remove([]string{id})
 
 	return nil
 }
 
 // ModifyRole in ldap server, automatically update org's rbacx
-func (org *Organization) ModifyRole(oid, name, description string, ups, pps []string) error {
+func (org *Organization) ModifyRole(id, name, description string, ups, pps []string) error {
 
 	upObjects, err := org.convertIDToObject(ups, true)
 	if err != nil {
@@ -69,7 +69,7 @@ func (org *Organization) ModifyRole(oid, name, description string, ups, pps []st
 		return err
 	}
 
-	dn := org.dn(oid, role)
+	dn := org.dn(id, role)
 	mq := ldap.NewModifyRequest(dn)
 
 	if len(name) > 0 {
@@ -90,7 +90,7 @@ func (org *Organization) ModifyRole(oid, name, description string, ups, pps []st
 		return err
 	}
 
-	role, err := org.rbacx.RoleByID(oid)
+	role, err := org.rbacx.RoleByID(id)
 	if err != nil {
 		return err
 	}
@@ -122,24 +122,24 @@ func (org *Organization) RoleByIDs(ids []string) ([]map[string]interface{}, erro
 }
 
 // RoleByPermission which role contain this permission
-func (org *Organization) RoleByPermission(oid string, isUnit bool) ([]string, error) {
+func (org *Organization) RoleByPermission(id string, isUnit bool) ([]string, error) {
 
 	var filter string
 	if isUnit {
-		filter = fmt.Sprintf(`(upid=%s)`, oid)
+		filter = fmt.Sprintf(`(upid=%s)`, id)
 	} else {
-		filter = fmt.Sprintf(`(ppid=%s)`, oid)
+		filter = fmt.Sprintf(`(ppid=%s)`, id)
 	}
 
 	sc := &SearchCondition{
 		DN:         org.parentDN(role),
 		Filter:     filter,
-		Attributes: []string{`oid`},
+		Attributes: []string{`id`},
 		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
 			var roles []map[string]interface{}
 			for _, e := range sr.Entries {
 				roles = append(roles, map[string]interface{}{
-					`id`: e.GetAttributeValue(`oid`),
+					`id`: e.GetAttributeValue(`id`),
 				})
 			}
 			return roles

@@ -8,18 +8,18 @@ import (
 )
 
 const (
-	person           = 0
+	member           = 0
 	role             = 1
 	unitPermission   = 2
-	personPermission = 3
+	memberPermission = 3
 	unitType         = 4
-	personType       = 5
+	memberType       = 5
 	unit             = 6
 )
 
-func (org *Organization) dn(oid string, category int) string {
+func (org *Organization) dn(id string, category int) string {
 
-	return fmt.Sprintf(`oid=%s,%s`, oid, org.parentDN(category))
+	return fmt.Sprintf(`id=%s,%s`, id, org.parentDN(category))
 }
 
 func (org *Organization) parentDN(category int) string {
@@ -27,17 +27,17 @@ func (org *Organization) parentDN(category int) string {
 	baseDN := org.subffix
 
 	switch category {
-	case person:
-		baseDN = godn.Person(org.subffix)
+	case member:
+		baseDN = godn.Member(org.subffix)
 	case role:
 		baseDN = godn.Role(org.subffix)
 	case unitPermission:
 		baseDN = godn.Permission(org.subffix, true)
-	case personPermission:
+	case memberPermission:
 		baseDN = godn.Permission(org.subffix, false)
 	case unitType:
 		baseDN = godn.DoloresType(org.subffix, true)
-	case personType:
+	case memberType:
 		baseDN = godn.DoloresType(org.subffix, false)
 	case unit:
 		baseDN = godn.Unit(org.subffix)
@@ -50,16 +50,16 @@ func typeCategory(isUnit bool) int {
 	if isUnit {
 		return unitType
 	}
-	return personType
+	return memberType
 }
 
 func permissionCategory(isUnit bool) int {
 	if isUnit {
 		return unitPermission
 	}
-	return personPermission
+	return memberPermission
 }
 
-func generatorOID() string {
+func generatorID() string {
 	return xid.New().String()
 }

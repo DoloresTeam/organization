@@ -10,7 +10,7 @@ type Role struct {
 	mutex             sync.Mutex
 	ID                string
 	unitPermissions   map[string]*Permission
-	personPermissions map[string]*Permission
+	memberPermissions map[string]*Permission
 }
 
 func NewRole(id string, ups, pps []*Permission) *Role {
@@ -26,7 +26,7 @@ func NewRole(id string, ups, pps []*Permission) *Role {
 	}
 
 	return &Role{ID: id,
-		unitPermissions: upMap, personPermissions: ppMap}
+		unitPermissions: upMap, memberPermissions: ppMap}
 }
 
 func (r *Role) Add(ps []*Permission, isUnit bool) {
@@ -36,7 +36,7 @@ func (r *Role) Add(ps []*Permission, isUnit bool) {
 		}
 	} else {
 		for _, p := range ps {
-			r.personPermissions[p.ID] = p
+			r.memberPermissions[p.ID] = p
 		}
 	}
 }
@@ -48,7 +48,7 @@ func (r *Role) Remove(ps []*Permission, isUnit bool) {
 		}
 	} else {
 		for _, p := range ps {
-			delete(r.personPermissions, p.ID)
+			delete(r.memberPermissions, p.ID)
 		}
 	}
 }
@@ -57,7 +57,7 @@ func (r *Role) Replace(ps []*Permission, isUnit bool) {
 	if isUnit {
 		r.unitPermissions = make(map[string]*Permission, 0)
 	} else {
-		r.personPermissions = make(map[string]*Permission, 0)
+		r.memberPermissions = make(map[string]*Permission, 0)
 	}
 	r.Add(ps, isUnit)
 }
@@ -69,7 +69,7 @@ func (r *Role) matchedTypes(isUnit bool) mapset.Set {
 			set = set.Union(v.types)
 		}
 	} else {
-		for _, v := range r.personPermissions {
+		for _, v := range r.memberPermissions {
 			set = set.Union(v.types)
 		}
 	}

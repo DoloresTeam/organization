@@ -15,7 +15,7 @@ func (org *Organization) AddPermission(name, description string, types []string,
 		return errors.New(`invalid types`)
 	}
 
-	dn := org.dn(generatorOID(), permissionCategory(isUnit))
+	dn := org.dn(generatorID(), permissionCategory(isUnit))
 	aq := ldap.NewAddRequest(dn)
 
 	aq.Attribute(`objectClass`, []string{`permission`, `top`})
@@ -28,9 +28,9 @@ func (org *Organization) AddPermission(name, description string, types []string,
 }
 
 // ModifyPermission in ldap
-func (org *Organization) ModifyPermission(oid, name, description string, types []string, isUnit bool) error {
+func (org *Organization) ModifyPermission(id, name, description string, types []string, isUnit bool) error {
 
-	dn := org.dn(oid, permissionCategory(isUnit))
+	dn := org.dn(id, permissionCategory(isUnit))
 	mq := ldap.NewModifyRequest(dn)
 
 	if len(name) != 0 {
@@ -49,7 +49,7 @@ func (org *Organization) ModifyPermission(oid, name, description string, types [
 	}
 
 	// 更新 rbacx 内部数据
-	p, _ := org.rbacx.PermissionByID(oid, isUnit)
+	p, _ := org.rbacx.PermissionByID(id, isUnit)
 	if p != nil {
 		p.Replace(types)
 	}
@@ -58,9 +58,9 @@ func (org *Organization) ModifyPermission(oid, name, description string, types [
 }
 
 // DelPermission in ldap
-func (org *Organization) DelPermission(oid string, isUnit bool) error {
+func (org *Organization) DelPermission(id string, isUnit bool) error {
 
-	rids, err := org.RoleByPermission(oid, isUnit)
+	rids, err := org.RoleByPermission(id, isUnit)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (org *Organization) DelPermission(oid string, isUnit bool) error {
 		return fmt.Errorf(`has role reference this permission %s`, rids)
 	}
 
-	dn := org.dn(oid, role)
+	dn := org.dn(id, role)
 	dq := ldap.NewDelRequest(dn, nil)
 
 	return org.l.Del(dq)
@@ -81,7 +81,7 @@ func (org *Organization) PermissionByType(dtype string, isUnit bool) ([]string, 
 		ldap.ScopeSingleLevel,
 		ldap.DerefAlways, 0, 0, false,
 		fmt.Sprintf(`(rbacType=%s)`, dtype),
-		[]string{`oid`}, nil)
+		[]string{`id`}, nil)
 
 	sr, err := org.l.Search(sq)
 	if err != nil {
@@ -90,7 +90,7 @@ func (org *Organization) PermissionByType(dtype string, isUnit bool) ([]string, 
 
 	var ids []string
 	for _, entry := range sr.Entries {
-		ids = append(ids, entry.GetAttributeValue(`oid`))
+		ids = append(ids, entry.GetAttributeValue(`id`))
 	}
 
 	return ids, nil

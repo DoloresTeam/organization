@@ -62,7 +62,7 @@ func (org *Organization) initial() error {
 		if err != nil {
 			return err
 		}
-		pps, err := org.convertIDToObject(v[`personPermissionIDs`].([]string), false)
+		pps, err := org.convertIDToObject(v[`memberPermissionIDs`].([]string), false)
 		if err != nil {
 			return err
 		}

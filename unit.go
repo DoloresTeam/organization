@@ -25,17 +25,17 @@ func (org *Organization) AddUnit(parentID, name, description, utypeID string, in
 		return errors.New(`utypeID must be not empty`)
 	}
 
-	oid := generatorOID()
+	id := generatorID()
 
 	var dn string
 	if len(parentID) == 0 {
-		dn = org.dn(oid, unit)
+		dn = org.dn(id, unit)
 	} else {
 		_, err := org.UnitByIDs([]string{parentID})
 		if err != nil {
 			return errors.New(`parent must be not nil`)
 		}
-		dn = fmt.Sprintf(`oid=%s,oid=%s,%s`, oid, parentID, org.parentDN(unit))
+		dn = fmt.Sprintf(`id=%s,id=%s,%s`, id, parentID, org.parentDN(unit))
 	}
 
 	aq := ldap.NewAddRequest(dn)

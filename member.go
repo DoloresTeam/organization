@@ -11,9 +11,9 @@ func errorWithPropertyName(p string) error {
 	return fmt.Errorf(`%s must be not empty`, p)
 }
 
-// AddPerson to ldap server
+// AddMember to ldap server
 // info can include custom field
-func (org *Organization) AddPerson(commonName, realName string, ptypeID string, roleIDs, unitIDs []string, info map[string][]string) error {
+func (org *Organization) AddMember(commonName, realName string, ptypeID string, roleIDs, unitIDs []string, info map[string][]string) error {
 
 	if len(commonName) == 0 {
 		return errorWithPropertyName(`commonName`)
@@ -34,7 +34,7 @@ func (org *Organization) AddPerson(commonName, realName string, ptypeID string, 
 	//
 	ps, _ := org.TypeByIDs([]string{ptypeID}, false)
 	if len(ps) != 1 {
-		return errors.New(`invalidate person type`)
+		return errors.New(`invalidate member type`)
 	}
 
 	rs, _ := org.RoleByIDs(roleIDs)
@@ -47,9 +47,9 @@ func (org *Organization) AddPerson(commonName, realName string, ptypeID string, 
 		return errors.New(`invalid units`)
 	}
 
-	aq := ldap.NewAddRequest(org.dn(generatorOID(), person))
+	aq := ldap.NewAddRequest(org.dn(generatorID(), member))
 
-	aq.Attribute(`objectClass`, []string{`person`, `personExtended`, `top`})
+	aq.Attribute(`objectClass`, []string{`member`, `memberExtended`, `top`})
 
 	aq.Attribute(`cn`, []string{commonName})
 	aq.Attribute(`sn`, []string{realName})
@@ -61,13 +61,13 @@ func (org *Organization) AddPerson(commonName, realName string, ptypeID string, 
 	return org.l.Add(aq)
 }
 
-// DelPerson by id
-func (org *Organization) DelPerson(id string) error {
+// DelMember by id
+func (org *Organization) DelMember(id string) error {
 	if len(id) == 0 {
-		return errors.New(`person id is empty`)
+		return errors.New(`member id is empty`)
 	}
 
-	dq := ldap.NewDelRequest(fmt.Sprintf(`oid=%s,%s`, id, org.parentDN(person)), nil)
+	dq := ldap.NewDelRequest(fmt.Sprintf(`id=%s,%s`, id, org.parentDN(member)), nil)
 
 	return org.l.Del(dq)
 }

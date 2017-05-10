@@ -2,7 +2,7 @@ package organization
 
 import "testing"
 
-func TestAddPerson(t *testing.T) {
+func TestAddMember(t *testing.T) {
 
 	if testing.Short() {
 		t.SkipNow()
@@ -13,7 +13,7 @@ func TestAddPerson(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = org.AddPerson(`Kevin.Gong`, `巩祥`, `b49961dhfpcuhne4dvl0`,
+	err = org.AddMember(`Kevin.Gong`, `巩祥`, `b49961dhfpcuhne4dvl0`,
 		[]string{`b49bu5lhfpcvvurbmns0`},
 		[]string{`b499755hfpcul32vtt9g`},
 		nil)

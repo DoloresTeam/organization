@@ -9,7 +9,7 @@ import (
 // AddType desgined to add a new dolresType
 func (org *Organization) AddType(name, description string, isUnit bool) error {
 
-	dn := org.dn(generatorOID(), typeCategory(isUnit))
+	dn := org.dn(generatorID(), typeCategory(isUnit))
 	aq := ldap.NewAddRequest(dn)
 
 	aq.Attribute(`objectClass`, []string{`doloresType`, `top`})
@@ -20,9 +20,9 @@ func (org *Organization) AddType(name, description string, isUnit bool) error {
 }
 
 // ModifyType update name or description of doloresType
-func (org *Organization) ModifyType(oid string, name, description string, isUnit bool) error {
+func (org *Organization) ModifyType(id string, name, description string, isUnit bool) error {
 
-	dn := org.dn(generatorOID(), typeCategory(isUnit))
+	dn := org.dn(generatorID(), typeCategory(isUnit))
 	mq := ldap.NewModifyRequest(dn)
 
 	if len(name) != 0 {
@@ -36,9 +36,9 @@ func (org *Organization) ModifyType(oid string, name, description string, isUnit
 }
 
 // DelType by id
-func (org *Organization) DelType(oid string, isUnit bool) error {
+func (org *Organization) DelType(id string, isUnit bool) error {
 
-	pids, err := org.PermissionByType(oid, isUnit)
+	pids, err := org.PermissionByType(id, isUnit)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (org *Organization) DelType(oid string, isUnit bool) error {
 		return errors.New(`has Permission refrence this type,`)
 	}
 
-	dn := org.dn(generatorOID(), typeCategory(isUnit))
+	dn := org.dn(generatorID(), typeCategory(isUnit))
 	dq := ldap.NewDelRequest(dn, nil)
 
 	return org.l.Del(dq)

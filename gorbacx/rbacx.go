@@ -58,7 +58,7 @@ func (rbacx *RBACX) PermissionByID(id string, isUnit bool) (*Permission, error) 
 				}
 			}
 		} else {
-			for _, p := range role.personPermissions {
+			for _, p := range role.memberPermissions {
 				if p.ID == id {
 					return p, nil
 				}
@@ -100,7 +100,7 @@ func (rbacx *RBACX) PrettyPrint() {
 			fmt.Println(v.ID, v.types)
 		}
 		fmt.Println(`~~~~~~~~~~~~~~~~~~~~~~~`)
-		for _, v := range role.personPermissions {
+		for _, v := range role.memberPermissions {
 			fmt.Println(v.ID, v.types)
 		}
 	}
