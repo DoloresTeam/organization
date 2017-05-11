@@ -17,64 +17,6 @@ func (org *Organization) search(sc *SearchCondition) ([]map[string]interface{}, 
 	return sc.Convertor(sr), nil
 }
 
-type mapperItem struct {
-	key           string
-	value         string
-	isSignleValue bool
-}
-
-type ldapMapper struct {
-	items []*mapperItem
-	keys  []string
-}
-
-type mapper map[string]interface{}
-
-func newLDAPMapper(m mapper) *ldapMapper {
-	var items []*mapperItem
-	var keys []string
-
-	delete(m, `id`)
-
-	for key, value := range m {
-
-		if s, ok := value.(string); ok {
-			items = append(items, &mapperItem{key, s, true})
-			keys = append(keys, key)
-			continue
-		}
-		if ss, ok := value.([]string); ok && len(ss) == 1 {
-			items = append(items, &mapperItem{key, ss[0], false})
-			keys = append(keys, key)
-		}
-	}
-	return &ldapMapper{items, keys}
-}
-
-func (lm *ldapMapper) attributes() []string {
-	return append(lm.keys, `id`)
-}
-
-func (lm *ldapMapper) mapEntries(sr *ldap.SearchResult) []map[string]interface{} {
-
-	var values []map[string]interface{}
-
-	for _, e := range sr.Entries {
-		value := make(map[string]interface{}, len(lm.keys))
-		for _, item := range lm.items {
-			if item.isSignleValue {
-				value[item.value] = e.GetAttributeValue(item.key)
-			} else {
-				value[item.value] = e.GetAttributeValues(item.key)
-			}
-		}
-		value[`id`] = e.GetAttributeValue(`objectIdentifier`)
-		values = append(values, value)
-	}
-
-	return values
-}
-
 // SearchCondition desgin to constrctor search request
 type SearchCondition struct {
 	DN         string
@@ -85,7 +27,7 @@ type SearchCondition struct {
 
 func (sc *SearchCondition) sq() *ldap.SearchRequest {
 	return ldap.NewSearchRequest(sc.DN,
-		ldap.ScopeSingleLevel,
+		ldap.ScopeWholeSubtree,
 		ldap.NeverDerefAliases, 0, 0, false,
 		sc.Filter, sc.Attributes, nil)
 }
@@ -151,7 +93,7 @@ func (org *Organization) permissionSC(filter string, isUnit bool) *SearchConditi
 			var types []map[string]interface{}
 			for _, e := range sr.Entries {
 				types = append(types, map[string]interface{}{
-					`id`:          e.GetAttributeValue(`objectIdentifier`),
+					`id`:          e.GetAttributeValue(`id`),
 					`name`:        e.GetAttributeValue(`cn`),
 					`description`: e.GetAttributeValue(`description`),
 					`types`:       e.GetAttributeValues(`rbacType`),
@@ -162,9 +104,12 @@ func (org *Organization) permissionSC(filter string, isUnit bool) *SearchConditi
 	}
 }
 
-func (org *Organization) unitSC(filter string, m mapper) *SearchCondition {
+func (org *Organization) unitSC(filter string, containACL bool) *SearchCondition {
 
-	lm := newLDAPMapper(m)
+	attributes := []string{`id`, `ou`, `description`}
+	if containACL {
+		attributes = append(attributes, `rbacType`)
+	}
 
 	if len(filter) > 0 {
 		filter = fmt.Sprintf(`(&(objectClass=organizationalUnit)%s)`, filter)
@@ -175,8 +120,25 @@ func (org *Organization) unitSC(filter string, m mapper) *SearchCondition {
 	return &SearchCondition{
 		DN:         org.parentDN(unit),
 		Filter:     filter,
-		Attributes: lm.attributes(),
-		Convertor:  lm.mapEntries,
+		Attributes: attributes,
+		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
+			var units []map[string]interface{}
+			for _, e := range sr.Entries {
+				unit := make(map[string]interface{}, 0)
+				dn, _ := ldap.ParseDN(e.DN)
+				if len(dn.RDNs) > 5 {
+					unit[`pid`] = dn.RDNs[1].Attributes[0].Value
+				}
+				unit[`id`] = e.GetAttributeValue(`id`)
+				unit[`name`] = e.GetAttributeValue(`ou`)
+				unit[`description`] = e.GetAttributeValue(`description`)
+				if containACL {
+					unit[`types`] = e.GetAttributeValue(`rbacType`)
+				}
+				units = append(units, unit)
+			}
+			return units
+		},
 	}
 }
 

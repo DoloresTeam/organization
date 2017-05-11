@@ -42,13 +42,17 @@ func (org *Organization) UnitByIDs(ids []string) ([]map[string]interface{}, erro
 		return nil, err
 	}
 
-	result, err := org.search(org.unitSC(filter, mapper{
-		`ou`: `name`,
-	}))
+	result, err := org.search(org.unitSC(filter, true))
 
 	if err != nil {
 		return nil, err
 	}
 
 	return result, nil
+}
+
+// AllUnit ...
+func (org *Organization) AllUnit() ([]map[string]interface{}, error) {
+
+	return org.search(org.unitSC(``, false))
 }

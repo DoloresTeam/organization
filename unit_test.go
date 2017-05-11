@@ -10,7 +10,7 @@ func TestUnitByID(t *testing.T) {
 
 	org, _ := neworg()
 
-	r, e := org.UnitByIDs([]string{`2`})
+	r, e := org.AllUnit()
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -20,13 +20,13 @@ func TestUnitByID(t *testing.T) {
 
 func TestAddUnit(t *testing.T) {
 
-	// if testing.Short() {
-	// 	t.SkipNow()
-	// }
+	if testing.Short() {
+		t.SkipNow()
+	}
 
 	org, _ := neworg()
 
-	err := org.AddUnit(``, map[string][]string{
+	err := org.AddUnit(`b49kdrg6h302hrpggg8g`, map[string][]string{
 		`ou`:          []string{`Test`},
 		`description`: []string{`This is test unit's description`},
 		`rbacType`:    []string{`b49jtn06h301mgko5jng`},
