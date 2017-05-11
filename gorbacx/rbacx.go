@@ -7,17 +7,20 @@ import (
 	"github.com/deckarep/golang-set"
 )
 
+// RBACX ...
 type RBACX struct {
 	mutex sync.Mutex
 	roles map[string]*Role
 }
 
+// New ...
 func New() *RBACX {
 	return &RBACX{
 		roles: make(map[string]*Role, 0),
 	}
 }
 
+// Add ...
 func (rbacx *RBACX) Add(roles []*Role) {
 	rbacx.mutex.Lock()
 	defer rbacx.mutex.Unlock()
@@ -27,6 +30,7 @@ func (rbacx *RBACX) Add(roles []*Role) {
 	}
 }
 
+// Remove ...
 func (rbacx *RBACX) Remove(ids []string) {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()
@@ -36,6 +40,7 @@ func (rbacx *RBACX) Remove(ids []string) {
 	}
 }
 
+// RoleByID ...
 func (rbacx *RBACX) RoleByID(id string) (*Role, error) {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()
@@ -46,6 +51,7 @@ func (rbacx *RBACX) RoleByID(id string) (*Role, error) {
 	return nil, fmt.Errorf(`not found role id: %s`, id)
 }
 
+// PermissionByID ...
 func (rbacx *RBACX) PermissionByID(id string, isUnit bool) (*Permission, error) {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()
@@ -69,6 +75,7 @@ func (rbacx *RBACX) PermissionByID(id string, isUnit bool) (*Permission, error) 
 	return nil, fmt.Errorf(`not found permission id: %s`, id)
 }
 
+// MatchedTypes ...
 func (rbacx *RBACX) MatchedTypes(roleIDs []string, isUnit bool) []string {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()
@@ -92,6 +99,7 @@ func (rbacx *RBACX) MatchedTypes(roleIDs []string, isUnit bool) []string {
 	return types
 }
 
+// PrettyPrint ...
 func (rbacx *RBACX) PrettyPrint() {
 	fmt.Println(`rbacx PrettyPrint Begin`)
 	for _, role := range rbacx.roles {

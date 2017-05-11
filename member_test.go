@@ -27,3 +27,39 @@ func TestAddMember(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestFetchMemberRoles(t *testing.T) {
+
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	org, err := neworg()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ids, err := org.RoleIDsByMemberID(`b49kehg6h302jg98oi70`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(ids)
+}
+
+func TestFetchOrgMemberByID(t *testing.T) {
+
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	org, err := neworg()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ids, err := org.OrganizationMemberByMemberID(`b49kehg6h302jg98oi70`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(ids)
+}

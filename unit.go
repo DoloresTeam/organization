@@ -56,3 +56,31 @@ func (org *Organization) AllUnit() ([]map[string]interface{}, error) {
 
 	return org.search(org.unitSC(``, false))
 }
+
+// OrganizationUnitByMemberID ...
+func (org *Organization) OrganizationUnitByMemberID(id string) ([]map[string]interface{}, error) {
+
+	filter, err := org.filterByMemberID(id, true)
+	if err != nil {
+		return nil, err
+	}
+	return org.search(org.unitSC(filter, false))
+}
+
+func (org *Organization) filterByMemberID(id string, isUnit bool) (string, error) {
+
+	// 通过id 拿到所有的 角色
+	roleIDs, err := org.RoleIDsByMemberID(id)
+	if err != nil {
+		return ``, err
+	}
+
+	types := org.rbacx.MatchedTypes(roleIDs, isUnit)
+
+	filter, err := scConvertArraysToFilter(`rbacType`, types)
+	if err != nil {
+		return ``, err
+	}
+
+	return filter, nil
+}

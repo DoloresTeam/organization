@@ -58,15 +58,28 @@ func (org *Organization) initial() error {
 
 	var roles []*gorbacx.Role
 	for _, v := range rs {
-		ups, err := org.convertIDToObject(v[`unitPermissionIDs`].([]string), true)
+
+		unitInfos, err := org.PermissionByIDs(v[`unitPermissionIDs`].([]string), true)
 		if err != nil {
 			return err
 		}
-		pps, err := org.convertIDToObject(v[`memberPermissionIDs`].([]string), false)
+
+		memberInfos, err := org.PermissionByIDs(v[`memberPermissionIDs`].([]string), false)
 		if err != nil {
 			return err
 		}
-		roles = append(roles, gorbacx.NewRole(v[`id`].(string), ups, pps))
+
+		var ups []*gorbacx.Permission
+		for _, info := range unitInfos {
+			ups = append(ups, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
+		}
+
+		var mps []*gorbacx.Permission
+		for _, info := range memberInfos {
+			mps = append(mps, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
+		}
+
+		roles = append(roles, gorbacx.NewRole(v[`id`].(string), ups, mps))
 	}
 
 	org.rbacx.Add(roles)

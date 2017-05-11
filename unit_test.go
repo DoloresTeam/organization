@@ -18,6 +18,27 @@ func TestUnitByID(t *testing.T) {
 	t.Log(r)
 }
 
+func TestOrganizationUnitByMemberID(t *testing.T) {
+
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	org, err := neworg()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r, e := org.OrganizationUnitByMemberID(`b49kehg6h302jg98oi70`)
+	if e != nil {
+		t.Fatal(e)
+	}
+
+	for _, v := range r {
+		t.Log(v[`id`])
+	}
+}
+
 func TestAddUnit(t *testing.T) {
 
 	if testing.Short() {

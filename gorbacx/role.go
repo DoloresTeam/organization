@@ -6,6 +6,7 @@ import (
 	"github.com/deckarep/golang-set"
 )
 
+// Role ...
 type Role struct {
 	mutex             sync.Mutex
 	ID                string
@@ -13,6 +14,7 @@ type Role struct {
 	memberPermissions map[string]*Permission
 }
 
+// NewRole ...
 func NewRole(id string, ups, pps []*Permission) *Role {
 
 	upMap := make(map[string]*Permission, len(ups))
@@ -29,6 +31,7 @@ func NewRole(id string, ups, pps []*Permission) *Role {
 		unitPermissions: upMap, memberPermissions: ppMap}
 }
 
+// Add ...
 func (r *Role) Add(ps []*Permission, isUnit bool) {
 	if isUnit {
 		for _, p := range ps {
@@ -41,6 +44,7 @@ func (r *Role) Add(ps []*Permission, isUnit bool) {
 	}
 }
 
+// Remove ...
 func (r *Role) Remove(ps []*Permission, isUnit bool) {
 	if isUnit {
 		for _, p := range ps {
@@ -53,6 +57,7 @@ func (r *Role) Remove(ps []*Permission, isUnit bool) {
 	}
 }
 
+// Replace ...
 func (r *Role) Replace(ps []*Permission, isUnit bool) {
 	if isUnit {
 		r.unitPermissions = make(map[string]*Permission, 0)

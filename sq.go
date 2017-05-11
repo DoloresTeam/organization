@@ -1,7 +1,6 @@
 package organization
 
 import (
-	"errors"
 	"fmt"
 
 	ldap "gopkg.in/ldap.v2"
@@ -70,7 +69,7 @@ func (org *Organization) roleSC(filter string) *SearchCondition {
 					`name`:                e.GetAttributeValue(`cn`),
 					`description`:         e.GetAttributeValue(`description`),
 					`unitPermissionIDs`:   e.GetAttributeValues(`unitpermissionIdentifier`),
-					`memberPermissionIDs`: e.GetAttributeValues(`memberpermissionIdentifier`),
+					`memberPermissionIDs`: e.GetAttributeValues(`personpermissionIdentifier`),
 				})
 			}
 
@@ -85,6 +84,7 @@ func (org *Organization) permissionSC(filter string, isUnit bool) *SearchConditi
 	} else {
 		filter = `(objectClass=permission)`
 	}
+
 	return &SearchCondition{
 		DN:         org.parentDN(permissionCategory(isUnit)),
 		Filter:     filter,
@@ -96,7 +96,7 @@ func (org *Organization) permissionSC(filter string, isUnit bool) *SearchConditi
 					`id`:          e.GetAttributeValue(`id`),
 					`name`:        e.GetAttributeValue(`cn`),
 					`description`: e.GetAttributeValue(`description`),
-					`types`:       e.GetAttributeValues(`rbacType`),
+					`rbacType`:    e.GetAttributeValues(`rbacType`),
 				})
 			}
 			return types
@@ -142,14 +142,62 @@ func (org *Organization) unitSC(filter string, containACL bool) *SearchCondition
 	}
 }
 
+func (org *Organization) memberSC(filter string, containACL bool) *SearchCondition {
+
+	attributes := []string{`id`, `name`, `unitID`, `email`, `sn`, `thirdAccount`, `thirdPassword`, `title`}
+	if containACL {
+		attributes = append(attributes, `rbacType`, `rbacRole`)
+	}
+
+	if len(filter) > 0 {
+		filter = fmt.Sprintf(`(&(objectClass=member)%s)`, filter)
+	} else {
+		filter = `(objectClass=member)`
+	}
+
+	return &SearchCondition{
+		DN:         org.parentDN(member),
+		Filter:     filter,
+		Attributes: attributes,
+		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
+
+			var members []map[string]interface{}
+			for _, e := range sr.Entries {
+
+				member := make(map[string]interface{}, 0)
+
+				member[`id`] = e.GetAttributeValue(`id`)
+				member[`name`] = e.GetAttributeValue(`cn`)
+				member[`realName`] = e.GetAttributeValue(`sn`)
+				member[`departmentIDs`] = e.GetAttributeValues(`unitID`)
+				member[`title`] = e.GetAttributeValues(`title`)
+				member[`email`] = e.GetAttributeValues(`email`)
+				member[`easemobAccount`] = e.GetAttributeValue(`thirdAccount`)
+				member[`easemobPassword`] = e.GetAttributeValue(`thirdPassword`)
+				if containACL {
+					member[`rbacType`] = e.GetAttributeValue(`rbacType`)
+					member[`rbacRole`] = e.GetAttributeValues(`rbacRole`)
+				}
+				members = append(members, member)
+			}
+
+			return members
+		},
+	}
+}
+
 func scConvertIDsToFilter(ids []string) (string, error) {
-	if len(ids) == 0 {
-		return ``, errors.New(`At least one id`)
+	return scConvertArraysToFilter(`id`, ids)
+}
+
+func scConvertArraysToFilter(label string, datas []string) (string, error) {
+	if len(datas) == 0 {
+		return ``, fmt.Errorf(`At least one %s`, label)
 	}
 
 	filter := `(|`
-	for _, id := range ids {
-		filter += fmt.Sprintf(`(id=%s)`, id)
+	for _, id := range datas {
+		filter += fmt.Sprintf(`(%s=%s)`, label, id)
 	}
 	filter += `)`
 
