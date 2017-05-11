@@ -25,6 +25,20 @@ func (org *Organization) AddMember(info map[string][]string) error {
 	return org.l.Add(aq)
 }
 
+// ModifyMember ...
+func (org *Organization) ModifyMember(id string, info map[string][]string) error {
+
+	dn := org.dn(id, member)
+
+	mq := ldap.NewModifyRequest(dn)
+
+	for k, v := range info {
+		mq.Replace(k, v)
+	}
+
+	return org.l.Modify(mq)
+}
+
 // DelMember by id
 func (org *Organization) DelMember(id string) error {
 	if len(id) == 0 {
