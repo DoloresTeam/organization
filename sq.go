@@ -144,9 +144,11 @@ func (org *Organization) unitSC(filter string, containACL bool) *SearchCondition
 
 func (org *Organization) memberSC(filter string, containACL bool) *SearchCondition {
 
-	attributes := []string{`id`, `name`, `unitID`, `email`, `sn`, `thirdAccount`, `thirdPassword`, `title`}
+	attributes := []string{`id`, `name`, `unitID`, `email`,
+		`cn`, `title`, `telephoneNumber`,
+		`labeledURI`, `gender`}
 	if containACL {
-		attributes = append(attributes, `rbacType`, `rbacRole`)
+		attributes = append(attributes, `rbacType`, `rbacRole`, `thirdAccount`, `thirdPassword`)
 	}
 
 	if len(filter) > 0 {
@@ -167,16 +169,20 @@ func (org *Organization) memberSC(filter string, containACL bool) *SearchConditi
 				member := make(map[string]interface{}, 0)
 
 				member[`id`] = e.GetAttributeValue(`id`)
-				member[`name`] = e.GetAttributeValue(`cn`)
-				member[`realName`] = e.GetAttributeValue(`sn`)
+				member[`name`] = e.GetAttributeValue(`name`)
+				member[`realName`] = e.GetAttributeValue(`cn`)
 				member[`departmentIDs`] = e.GetAttributeValues(`unitID`)
 				member[`title`] = e.GetAttributeValues(`title`)
 				member[`email`] = e.GetAttributeValues(`email`)
-				member[`easemobAccount`] = e.GetAttributeValue(`thirdAccount`)
-				member[`easemobPassword`] = e.GetAttributeValue(`thirdPassword`)
+				member[`avatarURL`] = e.GetAttributeValue(`labeledURI`)
+				member[`gender`] = e.GetAttributeValue(`gender`)
+				member[`telephoneNumber`] = e.GetAttributeValue(`telephoneNumber`)
+
 				if containACL {
 					member[`rbacType`] = e.GetAttributeValue(`rbacType`)
 					member[`rbacRole`] = e.GetAttributeValues(`rbacRole`)
+					member[`easemobAccount`] = e.GetAttributeValue(`thirdAccount`)
+					member[`easemobPassword`] = e.GetAttributeValue(`thirdPassword`)
 				}
 				members = append(members, member)
 			}
