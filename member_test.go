@@ -54,11 +54,16 @@ func TestAuthMember(t *testing.T) {
 	m.Write([]byte(`123456`))
 	pwd := m.Sum(nil)
 
-	s, err := org.AuthMember(`13918839401`, fmt.Sprintf(`{MD5}%s`, hex.EncodeToString(pwd)))
+	id, err := org.AuthMember(`13918839401`, fmt.Sprintf(`{MD5}%s`, hex.EncodeToString(pwd)))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(s)
+
+	member, err := org.MemberByID(id, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(member)
 }
 
 func TestFetchMemberRoles(t *testing.T) {

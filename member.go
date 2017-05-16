@@ -8,19 +8,19 @@ import (
 )
 
 // AuthMember ...
-func (org *Organization) AuthMember(telephoneNumber, pwd string) (map[string]interface{}, error) {
+func (org *Organization) AuthMember(telephoneNumber, pwd string) (string, error) {
 
-	sc := org.memberSC(fmt.Sprintf(`(&(telephoneNumber=%s)(userPassword=%s))`, telephoneNumber, pwd), true)
+	sq := searchRequest(org.parentDN(member), fmt.Sprintf(`(&(telephoneNumber=%s)(userPassword=%s))`, telephoneNumber, pwd), []string{`id`})
 
-	rs, err := org.search(sc)
+	sr, err := org.l.Search(sq)
 	if err != nil {
-		return nil, err
+		return ``, err
 	}
-	fmt.Println(rs)
-	if len(rs) != 1 {
-		return nil, errors.New(`Auth failed !`)
+
+	if len(sr.Entries) != 1 {
+		return ``, errors.New(`Auth failed !`)
 	}
-	return rs[0], nil
+	return sr.Entries[0].GetAttributeValue(`id`), nil
 }
 
 // AddMember to ldap server
@@ -82,6 +82,21 @@ func (org *Organization) RoleIDsByMemberID(id string) ([]string, error) {
 		return nil, errors.New(`can't find this member`)
 	}
 	return sr.Entries[0].GetAttributeValues(`rbacRole`), nil
+}
+
+// MemberByID search member by id
+func (org *Organization) MemberByID(id string, containACL bool) (map[string]interface{}, error) {
+
+	sc := org.memberSC(fmt.Sprintf(`(id=%s)`, id), containACL)
+	rs, err := org.search(sc)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(rs) != 1 {
+		return nil, errors.New(`Found member than 1`)
+	}
+	return rs[0], nil
 }
 
 // OrganizationMemberByMemberID ...

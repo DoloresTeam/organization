@@ -25,10 +25,14 @@ type SearchCondition struct {
 }
 
 func (sc *SearchCondition) sq() *ldap.SearchRequest {
-	return ldap.NewSearchRequest(sc.DN,
+	return searchRequest(sc.DN, sc.Filter, sc.Attributes)
+}
+
+func searchRequest(dn, filter string, attrs []string) *ldap.SearchRequest {
+	return ldap.NewSearchRequest(dn,
 		ldap.ScopeWholeSubtree,
 		ldap.NeverDerefAliases, 0, 0, false,
-		sc.Filter, sc.Attributes, nil)
+		filter, attrs, nil)
 }
 
 func (org *Organization) typeSC(filter string, isUnit bool) *SearchCondition {
