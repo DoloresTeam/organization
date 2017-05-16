@@ -50,11 +50,7 @@ func TestAuthMember(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	m := md5.New()
-	m.Write([]byte(`123456`))
-	pwd := m.Sum(nil)
-
-	id, err := org.AuthMember(`13918839401`, fmt.Sprintf(`{MD5}%s`, hex.EncodeToString(pwd)))
+	id, err := org.AuthMember(`13918839401`, `123456`)
 	if err != nil {
 		t.Fatal(err)
 	}
