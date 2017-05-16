@@ -7,8 +7,20 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-func errorWithPropertyName(p string) error {
-	return fmt.Errorf(`%s must be not empty`, p)
+// AuthMember ...
+func (org *Organization) AuthMember(telephoneNumber, pwd string) (map[string]interface{}, error) {
+
+	sc := org.memberSC(fmt.Sprintf(`(&(telephoneNumber=%s)(userPassword=%s))`, telephoneNumber, pwd), true)
+
+	rs, err := org.search(sc)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(rs)
+	if len(rs) != 1 {
+		return nil, errors.New(`Auth failed !`)
+	}
+	return rs[0], nil
 }
 
 // AddMember to ldap server
