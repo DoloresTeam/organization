@@ -92,7 +92,7 @@ func (org *Organization) RoleIDsByMemberID(id string) ([]string, error) {
 }
 
 // MemberByID search member by id
-func (org *Organization) MemberByID(id string, containACL bool) (*SearchResult, error) {
+func (org *Organization) MemberByID(id string, containACL bool) (map[string]interface{}, error) {
 
 	var sa, ma []string
 
@@ -108,7 +108,14 @@ func (org *Organization) MemberByID(id string, containACL bool) (*SearchResult, 
 	filter := fmt.Sprintf(`(id=%s)`, id)
 	sq := &searchRequest{dn, filter, sa, ma, 0, nil}
 
-	return org.search(sq)
+	r, e := org.search(sq)
+	if e != nil {
+		return nil, e
+	}
+	if len(r.Data) != 1 {
+		return nil, errors.New(`404 Not Found`)
+	}
+	return r.Data[0], nil
 }
 
 // OrganizationMemberByMemberID ...
