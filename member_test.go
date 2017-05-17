@@ -90,16 +90,16 @@ func TestFetchMemberRoles(t *testing.T) {
 
 func TestFetchOrgMemberByID(t *testing.T) {
 
-	// if testing.Short() {
-	// 	t.SkipNow()
-	// }
+	if testing.Short() {
+		t.SkipNow()
+	}
 
 	org, err := neworg()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ids, err := org.OrganizationMemberByMemberID(`b4dsitlhfpcs1aerd0l0`)
+	ids, err := org.MemberByID(`b4dsitlhfpcs1aerd0l0`, true) // org.OrganizationMemberByMemberID(`b4dsitlhfpcs1aerd0l0`)
 	if err != nil {
 		t.Fatal(err)
 	}

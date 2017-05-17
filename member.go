@@ -7,10 +7,10 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-var memberSignleAttrs = [...]string{`id`, `name`, `unitID`, `email`, `cn`, `title`, `telephoneNumber`, `labeledURI`, `gender`}
+var memberSignleAttrs = [...]string{`id`, `name`, `email`, `cn`, `title`, `telephoneNumber`, `labeledURI`, `gender`}
 var memberSignleACLAttrs = [...]string{`thirdAccount`, `thirdPassword`}
 
-var memberMutAttrs = [...]string{`email`, `title`}
+var memberMutAttrs = [...]string{`email`, `title`, `unitID`}
 var memberMutACLAttrs = [...]string{`rbacType`, `rbacRole`}
 
 // AddMember to ldap server
@@ -93,12 +93,8 @@ func (org *Organization) RoleIDsByMemberID(id string) ([]string, error) {
 
 // MemberByID search member by id
 func (org *Organization) MemberByID(id string, containACL bool) (map[string]interface{}, error) {
-
-	var sa, ma []string
-
-	copy(sa, memberSignleAttrs[:])
-	copy(ma, memberMutAttrs[:])
-
+	sa := memberSignleAttrs[:]
+	ma := memberMutAttrs[:]
 	if containACL {
 		sa = append(sa, memberSignleACLAttrs[:]...)
 		ma = append(ma, memberMutACLAttrs[:]...)
