@@ -37,24 +37,19 @@ func (org *Organization) AddUnit(parentID string, info map[string][]string) erro
 // UnitByIDs ...
 func (org *Organization) UnitByIDs(ids []string) ([]map[string]interface{}, error) {
 
-	filter, err := scConvertIDsToFilter(ids)
+	dn := org.parentDN(unit)
+	filter, err := sqConvertIDsToFilter(ids)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := org.search(org.unitSC(filter, true))
-
+	sq := &searchRequest{dn, filter, []string{`id`}, nil, 0, nil}
+	r, err := org.search(sq)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
-}
-
-// AllUnit ...
-func (org *Organization) AllUnit() ([]map[string]interface{}, error) {
-
-	return org.search(org.unitSC(``, false))
+	return r.Data, nil
 }
 
 // OrganizationUnitByMemberID ...
@@ -64,7 +59,11 @@ func (org *Organization) OrganizationUnitByMemberID(id string) ([]map[string]int
 	if err != nil {
 		return nil, err
 	}
-	return org.search(org.unitSC(filter, false))
+	r, e := org.searchUnit(filter, false, 0, nil)
+	if e != nil {
+		return nil, e
+	}
+	return r.Data, nil
 }
 
 func (org *Organization) filterByMemberID(id string, isUnit bool) (string, error) {
@@ -77,7 +76,7 @@ func (org *Organization) filterByMemberID(id string, isUnit bool) (string, error
 
 	types := org.rbacx.MatchedTypes(roleIDs, isUnit)
 
-	filter, err := scConvertArraysToFilter(`rbacType`, types)
+	filter, err := sqConvertArraysToFilter(`rbacType`, types)
 	if err != nil {
 		return ``, err
 	}

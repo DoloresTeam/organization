@@ -10,7 +10,7 @@ func TestUnitByID(t *testing.T) {
 
 	org, _ := neworg()
 
-	r, e := org.AllUnit()
+	r, e := org.UnitByIDs([]string{`b4ds0t5hfpcr4h3thtd0`})
 	if e != nil {
 		t.Fatal(e)
 	}

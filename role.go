@@ -105,24 +105,35 @@ func (org *Organization) ModifyRole(id, name, description string, ups, pps []str
 	return nil
 }
 
-// AllRoles in ldap
+// AllRoles ...
 func (org *Organization) AllRoles() ([]map[string]interface{}, error) {
-	return org.search(org.roleSC(``))
+	r, e := org.Roles(0, nil)
+	if e != nil {
+		return nil, e
+	}
+	return r.Data, nil
+}
+
+// Roles in ldap
+func (org *Organization) Roles(pageSize uint32, cookie []byte) (*SearchResult, error) {
+	return org.searchRole(``, pageSize, cookie)
 }
 
 // RoleByIDs in ldap
 func (org *Organization) RoleByIDs(ids []string) ([]map[string]interface{}, error) {
-
-	filter, err := scConvertIDsToFilter(ids)
+	filter, err := sqConvertIDsToFilter(ids)
 	if err != nil {
 		return nil, err
 	}
-
-	return org.search(org.roleSC(filter))
+	r, e := org.searchRole(filter, 0, nil)
+	if e != nil {
+		return nil, e
+	}
+	return r.Data, nil
 }
 
-// RoleByPermission which role contain this permission
-func (org *Organization) RoleByPermission(id string, isUnit bool) ([]string, error) {
+// RoleIDsByPermissionID which role contain this permission
+func (org *Organization) RoleIDsByPermissionID(id string, isUnit bool) ([]string, error) {
 
 	var filter string
 	if isUnit {
@@ -130,31 +141,20 @@ func (org *Organization) RoleByPermission(id string, isUnit bool) ([]string, err
 	} else {
 		filter = fmt.Sprintf(`(ppid=%s)`, id)
 	}
+	dn := org.parentDN(role)
 
-	sc := &SearchCondition{
-		DN:         org.parentDN(role),
-		Filter:     filter,
-		Attributes: []string{`id`},
-		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
-			var roles []map[string]interface{}
-			for _, e := range sr.Entries {
-				roles = append(roles, map[string]interface{}{
-					`id`: e.GetAttributeValue(`id`),
-				})
-			}
-			return roles
-		},
-	}
+	sq := &searchRequest{dn, filter, []string{`id`}, nil, 0, nil}
 
-	roles, err := org.search(sc)
-	if err != nil {
-		return nil, err
+	r, e := org.search(sq)
+	if e != nil {
+		return nil, e
 	}
 
 	var ids []string
-	for _, v := range roles {
+	for _, v := range r.Data {
 		ids = append(ids, v[`id`].(string))
 	}
+
 	return ids, nil
 }
 

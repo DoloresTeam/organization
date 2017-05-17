@@ -7,21 +7,11 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-// AuthMember ...
-func (org *Organization) AuthMember(telephoneNumber, pwd string) (string, error) {
+var memberSignleAttrs = [...]string{`id`, `name`, `unitID`, `email`, `cn`, `title`, `telephoneNumber`, `labeledURI`, `gender`}
+var memberSignleACLAttrs = [...]string{`thirdAccount`, `thirdPassword`}
 
-	sq := searchRequest(org.parentDN(member), fmt.Sprintf(`(&(telephoneNumber=%s)(userPassword=%s))`, telephoneNumber, fmt.Sprintf(`{MD5}%s`, pwd)), []string{`id`})
-
-	sr, err := org.l.Search(sq)
-	if err != nil {
-		return ``, err
-	}
-
-	if len(sr.Entries) != 1 {
-		return ``, errors.New(`Auth failed !`)
-	}
-	return sr.Entries[0].GetAttributeValue(`id`), nil
-}
+var memberMutAttrs = [...]string{`email`, `title`}
+var memberMutACLAttrs = [...]string{`rbacType`, `rbacRole`}
 
 // AddMember to ldap server
 func (org *Organization) AddMember(info map[string][]string) error {
@@ -62,6 +52,23 @@ func (org *Organization) DelMember(id string) error {
 	return org.l.Del(dq)
 }
 
+// AuthMember ...
+func (org *Organization) AuthMember(telephoneNumber, pwd string) (string, error) {
+
+	dn := org.parentDN(member)
+	filter := fmt.Sprintf(`(&(telephoneNumber=%s)(userPassword=%s))`, telephoneNumber, fmt.Sprintf(`{MD5}%s`, pwd))
+	sq := &searchRequest{dn, filter, []string{`id`}, nil, 0, nil}
+
+	r, e := org.search(sq)
+	if e != nil {
+		return ``, e
+	}
+	if len(r.Data) != 1 {
+		return ``, errors.New(`404 Not Found`)
+	}
+	return r.Data[0][`id`].(string), nil
+}
+
 // RoleIDsByMemberID ...
 func (org *Organization) RoleIDsByMemberID(id string) ([]string, error) {
 
@@ -85,27 +92,39 @@ func (org *Organization) RoleIDsByMemberID(id string) ([]string, error) {
 }
 
 // MemberByID search member by id
-func (org *Organization) MemberByID(id string, containACL bool) (map[string]interface{}, error) {
+func (org *Organization) MemberByID(id string, containACL bool) (*SearchResult, error) {
 
-	sc := org.memberSC(fmt.Sprintf(`(id=%s)`, id), containACL)
-	rs, err := org.search(sc)
-	if err != nil {
-		return nil, err
+	var sa, ma []string
+
+	copy(sa, memberSignleAttrs[:])
+	copy(ma, memberMutAttrs[:])
+
+	if containACL {
+		sa = append(sa, memberSignleACLAttrs[:]...)
+		ma = append(ma, memberMutACLAttrs[:]...)
 	}
 
-	if len(rs) != 1 {
-		return nil, errors.New(`Found member than 1`)
-	}
-	return rs[0], nil
+	dn := org.parentDN(member)
+	filter := fmt.Sprintf(`(id=%s)`, id)
+	sq := &searchRequest{dn, filter, sa, ma, 0, nil}
+
+	return org.search(sq)
 }
 
 // OrganizationMemberByMemberID ...
 func (org *Organization) OrganizationMemberByMemberID(id string) ([]map[string]interface{}, error) {
-
+	dn := org.parentDN(member)
 	filter, err := org.filterByMemberID(id, false)
 	if err != nil {
 		return nil, err
 	}
 
-	return org.search(org.memberSC(filter, false))
+	sq := &searchRequest{dn, filter, memberSignleAttrs[:], memberMutAttrs[:], 0, nil}
+
+	r, e := org.search(sq)
+	if e != nil {
+		return nil, e
+	}
+
+	return r.Data, nil
 }

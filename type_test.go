@@ -37,7 +37,7 @@ func TestAllTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	types, err := org.AllType(false)
+	types, err := org.Types(false, 0, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestAllTypes(t *testing.T) {
 	// 	t.Fatal(err)
 	// }
 	// t.Log(`fileter id:b46otklhfpcs0pe51am0 b46otklhfpcs0pe51am0`)
-	for _, ty := range types {
+	for _, ty := range types.Data {
 		t.Log(ty)
 	}
 }

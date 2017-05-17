@@ -59,12 +59,12 @@ func (org *Organization) initial() error {
 	var roles []*gorbacx.Role
 	for _, v := range rs {
 
-		unitInfos, err := org.PermissionByIDs(v[`unitPermissionIDs`].([]string), true)
+		unitInfos, err := org.PermissionByIDs(v[`upid`].([]string), true)
 		if err != nil {
 			return err
 		}
 
-		memberInfos, err := org.PermissionByIDs(v[`memberPermissionIDs`].([]string), false)
+		memberInfos, err := org.PermissionByIDs(v[`ppid`].([]string), false)
 		if err != nil {
 			return err
 		}

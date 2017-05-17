@@ -1,6 +1,9 @@
 package organization
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestSearchPermission(t *testing.T) {
 
@@ -13,7 +16,10 @@ func TestSearchPermission(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, _ = org.PermissionByType(`b45v085hfpcidvk1m8fg`, true)
+	ps, _ := org.PermissionByType(`b4drqelhfpcqn7f7du50`, true)
+	if len(ps) == 0 {
+		t.Fatal(errors.New(`no permission`))
+	}
 }
 
 func TestAddPermission(t *testing.T) {
@@ -49,13 +55,13 @@ func TestFetchAllPermission(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ps, err := org.AllPermissions(true)
+	ps, err := org.Permissions(false, 0, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log(`all permissions`)
-	for _, p := range ps {
+	for _, p := range ps.Data {
 		t.Log(p)
 	}
 }

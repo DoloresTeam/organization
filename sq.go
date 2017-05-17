@@ -6,201 +6,146 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-func (org *Organization) search(sc *SearchCondition) ([]map[string]interface{}, error) {
+type searchRequest struct {
+	dn     string
+	filter string
+	sAttrs []string
+	mAttrs []string
+	size   uint32
+	cookie []byte
+}
 
-	sr, err := org.l.Search(sc.sq())
+// SearchResult ...
+type SearchResult struct {
+	Size   uint32
+	Cookie []byte
+	Data   []map[string]interface{}
+}
+
+func (org *Organization) search(sq *searchRequest) (*SearchResult, error) {
+
+	var controls []ldap.Control
+
+	if sq.size > 0 {
+		control := ldap.NewControlPaging(sq.size)
+		control.SetCookie(sq.cookie)
+		controls = append(controls, control)
+	}
+
+	lsq := ldap.NewSearchRequest(sq.dn,
+		ldap.ScopeWholeSubtree,
+		ldap.DerefAlways, 0, 0, false,
+		sq.filter,
+		append(sq.sAttrs, sq.mAttrs...),
+		controls)
+
+	var lsr *ldap.SearchResult
+	var err error
+
+	if sq.size == 0 && sq.cookie == nil {
+		lsr, err = org.l.SearchWithPaging(lsq, 200) // 会循环拿完所有对象
+	} else {
+		lsr, err = org.l.Search(lsq)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	return sc.Convertor(sr), nil
+	var data []map[string]interface{}
+	for _, e := range lsr.Entries {
+		v := make(map[string]interface{}, 0)
+		for _, s := range sq.sAttrs {
+			v[s] = e.GetAttributeValue(s)
+		}
+		for _, m := range sq.mAttrs {
+			v[m] = e.GetAttributeValues(m)
+		}
+		data = append(data, v)
+	}
+
+	var cookie []byte
+	var size uint32
+
+	pagingResult := ldap.FindControl(lsr.Controls, ldap.ControlTypePaging)
+	if pagingResult != nil {
+		cookie = pagingResult.(*ldap.ControlPaging).Cookie
+		size = pagingResult.(*ldap.ControlPaging).PagingSize
+	}
+
+	return &SearchResult{size, cookie, data}, nil
 }
 
-// SearchCondition desgin to constrctor search request
-type SearchCondition struct {
-	DN         string
-	Filter     string
-	Attributes []string
-	Convertor  func(*ldap.SearchResult) []map[string]interface{}
-}
-
-func (sc *SearchCondition) sq() *ldap.SearchRequest {
-	return searchRequest(sc.DN, sc.Filter, sc.Attributes)
-}
-
-func searchRequest(dn, filter string, attrs []string) *ldap.SearchRequest {
-	return ldap.NewSearchRequest(dn,
-		ldap.ScopeWholeSubtree,
-		ldap.NeverDerefAliases, 0, 0, false,
-		filter, attrs, nil)
-}
-
-func (org *Organization) typeSC(filter string, isUnit bool) *SearchCondition {
-	if len(filter) > 0 {
-		filter = fmt.Sprintf(`(&(objectClass=doloresType)(%s))`, filter)
-	} else {
+func (org *Organization) searchType(filter string, isUnit bool, pageSize uint32, cookie []byte) (*SearchResult, error) {
+	if len(filter) == 0 {
 		filter = `(objectClass=doloresType)`
-	}
-	return &SearchCondition{
-		DN:         org.parentDN(typeCategory(isUnit)),
-		Filter:     filter,
-		Attributes: []string{`id`, `cn`, `description`},
-		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
-			var types []map[string]interface{}
-			for _, e := range sr.Entries {
-				types = append(types, map[string]interface{}{
-					`id`:          e.GetAttributeValue(`id`),
-					`name`:        e.GetAttributeValue(`cn`),
-					`description`: e.GetAttributeValue(`description`),
-				})
-			}
-			return types
-		},
-	}
-}
-
-func (org *Organization) roleSC(filter string) *SearchCondition {
-	return &SearchCondition{
-		DN:         org.parentDN(role),
-		Filter:     fmt.Sprintf(`(&(objectClass=role)%s)`, filter),
-		Attributes: []string{`id`, `cn`, `description`, `upid`, `ppid`},
-		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
-
-			var roles []map[string]interface{}
-			for _, e := range sr.Entries {
-				roles = append(roles, map[string]interface{}{
-					`id`:                  e.GetAttributeValue(`id`),
-					`name`:                e.GetAttributeValue(`cn`),
-					`description`:         e.GetAttributeValue(`description`),
-					`unitPermissionIDs`:   e.GetAttributeValues(`unitpermissionIdentifier`),
-					`memberPermissionIDs`: e.GetAttributeValues(`personpermissionIdentifier`),
-				})
-			}
-
-			return roles
-		},
-	}
-}
-
-func (org *Organization) permissionSC(filter string, isUnit bool) *SearchCondition {
-	if len(filter) > 0 {
-		filter = fmt.Sprintf(`(&(objectClass=permission)%s)`, filter)
 	} else {
+		filter = fmt.Sprintf(`(&(objectClass=doloresType)%s)`, filter)
+	}
+	return org.search(&searchRequest{org.parentDN(typeCategory(isUnit)),
+		filter,
+		[]string{`id`, `cn`, `description`}, nil,
+		pageSize,
+		cookie,
+	})
+}
+
+func (org *Organization) searchPermission(filter string, isUnit bool, pageSize uint32, cookie []byte) (*SearchResult, error) {
+	if len(filter) == 0 {
 		filter = `(objectClass=permission)`
+	} else {
+		filter = fmt.Sprintf(`(&(objectClass=permission)%s)`, filter)
 	}
-
-	return &SearchCondition{
-		DN:         org.parentDN(permissionCategory(isUnit)),
-		Filter:     filter,
-		Attributes: []string{`id`, `cn`, `description`, `rbacType`},
-		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
-			var types []map[string]interface{}
-			for _, e := range sr.Entries {
-				types = append(types, map[string]interface{}{
-					`id`:          e.GetAttributeValue(`id`),
-					`name`:        e.GetAttributeValue(`cn`),
-					`description`: e.GetAttributeValue(`description`),
-					`rbacType`:    e.GetAttributeValues(`rbacType`),
-				})
-			}
-			return types
-		},
-	}
+	return org.search(&searchRequest{org.parentDN(permissionCategory(isUnit)),
+		filter,
+		[]string{`id`, `cn`, `description`},
+		[]string{`rbacType`},
+		pageSize,
+		cookie,
+	})
 }
 
-func (org *Organization) unitSC(filter string, containACL bool) *SearchCondition {
+func (org *Organization) searchRole(filter string, pageSize uint32, cookie []byte) (*SearchResult, error) {
+	if len(filter) == 0 {
+		filter = `(objectClass=role)`
+	} else {
+		filter = fmt.Sprintf(`(&(objectClass=role)%s)`, filter)
+	}
+	return org.search(&searchRequest{org.parentDN(role),
+		filter,
+		[]string{`id`, `cn`, `description`},
+		[]string{`upid`, `ppid`},
+		pageSize,
+		cookie,
+	})
+}
 
-	attributes := []string{`id`, `ou`, `description`}
+func (org *Organization) searchUnit(filter string, containACL bool, pageSize uint32, cookie []byte) (*SearchResult, error) {
+	var mAttrs []string
 	if containACL {
-		attributes = append(attributes, `rbacType`)
+		mAttrs = []string{`rbacType`}
 	}
 
-	if len(filter) > 0 {
-		filter = fmt.Sprintf(`(&(objectClass=organizationalUnit)%s)`, filter)
-	} else {
+	if len(filter) == 0 {
 		filter = `(objectClass=organizationalUnit)`
-	}
-
-	return &SearchCondition{
-		DN:         org.parentDN(unit),
-		Filter:     filter,
-		Attributes: attributes,
-		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
-			var units []map[string]interface{}
-			for _, e := range sr.Entries {
-				unit := make(map[string]interface{}, 0)
-				dn, _ := ldap.ParseDN(e.DN)
-				if len(dn.RDNs) > 5 {
-					unit[`pid`] = dn.RDNs[1].Attributes[0].Value
-				}
-				unit[`id`] = e.GetAttributeValue(`id`)
-				unit[`name`] = e.GetAttributeValue(`ou`)
-				unit[`description`] = e.GetAttributeValue(`description`)
-				if containACL {
-					unit[`types`] = e.GetAttributeValue(`rbacType`)
-				}
-				units = append(units, unit)
-			}
-			return units
-		},
-	}
-}
-
-func (org *Organization) memberSC(filter string, containACL bool) *SearchCondition {
-
-	attributes := []string{`id`, `name`, `unitID`, `email`,
-		`cn`, `title`, `telephoneNumber`,
-		`labeledURI`, `gender`}
-	if containACL {
-		attributes = append(attributes, `rbacType`, `rbacRole`, `thirdAccount`, `thirdPassword`)
-	}
-
-	if len(filter) > 0 {
-		filter = fmt.Sprintf(`(&(objectClass=member)%s)`, filter)
 	} else {
-		filter = `(objectClass=member)`
+		filter = fmt.Sprintf(`(&(objectClass=organizationalUnit)%s)`, filter)
 	}
 
-	return &SearchCondition{
-		DN:         org.parentDN(member),
-		Filter:     filter,
-		Attributes: attributes,
-		Convertor: func(sr *ldap.SearchResult) []map[string]interface{} {
-
-			var members []map[string]interface{}
-			for _, e := range sr.Entries {
-
-				member := make(map[string]interface{}, 0)
-
-				member[`id`] = e.GetAttributeValue(`id`)
-				member[`name`] = e.GetAttributeValue(`name`)
-				member[`realName`] = e.GetAttributeValue(`cn`)
-				member[`departmentIDs`] = e.GetAttributeValues(`unitID`)
-				member[`title`] = e.GetAttributeValues(`title`)
-				member[`email`] = e.GetAttributeValues(`email`)
-				member[`avatarURL`] = e.GetAttributeValue(`labeledURI`)
-				member[`gender`] = e.GetAttributeValue(`gender`)
-				member[`telephoneNumber`] = e.GetAttributeValue(`telephoneNumber`)
-
-				if containACL {
-					member[`rbacType`] = e.GetAttributeValue(`rbacType`)
-					member[`rbacRole`] = e.GetAttributeValues(`rbacRole`)
-					member[`easemobAccount`] = e.GetAttributeValue(`thirdAccount`)
-					member[`easemobPassword`] = e.GetAttributeValue(`thirdPassword`)
-				}
-				members = append(members, member)
-			}
-
-			return members
-		},
-	}
+	return org.search(&searchRequest{org.parentDN(unit),
+		filter,
+		[]string{`id`, `cn`, `description`},
+		mAttrs,
+		pageSize,
+		cookie,
+	})
 }
 
-func scConvertIDsToFilter(ids []string) (string, error) {
-	return scConvertArraysToFilter(`id`, ids)
+func sqConvertIDsToFilter(ids []string) (string, error) {
+	return sqConvertArraysToFilter(`id`, ids)
 }
 
-func scConvertArraysToFilter(label string, datas []string) (string, error) {
+func sqConvertArraysToFilter(label string, datas []string) (string, error) {
 	if len(datas) == 0 {
 		return ``, fmt.Errorf(`At least one %s`, label)
 	}

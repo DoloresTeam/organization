@@ -60,7 +60,7 @@ func (org *Organization) ModifyPermission(id, name, description string, types []
 // DelPermission in ldap
 func (org *Organization) DelPermission(id string, isUnit bool) error {
 
-	rids, err := org.RoleByPermission(id, isUnit)
+	rids, err := org.RoleIDsByPermissionID(id, isUnit)
 	if err != nil {
 		return err
 	}
@@ -96,16 +96,22 @@ func (org *Organization) PermissionByType(dtype string, isUnit bool) ([]string, 
 	return ids, nil
 }
 
-// AllPermissions in ldap
-func (org *Organization) AllPermissions(isUnit bool) ([]map[string]interface{}, error) {
-	return org.search(org.permissionSC(``, isUnit))
+// Permissions in ldap
+func (org *Organization) Permissions(isUnit bool, pageSize uint32, cookie []byte) (*SearchResult, error) {
+	return org.searchPermission(``, isUnit, pageSize, cookie)
 }
 
 // PermissionByIDs in ldap
 func (org *Organization) PermissionByIDs(ids []string, isUnit bool) ([]map[string]interface{}, error) {
-	filter, err := scConvertIDsToFilter(ids)
+	filter, err := sqConvertIDsToFilter(ids)
 	if err != nil {
 		return nil, err
 	}
-	return org.search(org.permissionSC(filter, isUnit))
+
+	r, e := org.searchPermission(filter, isUnit, 0, nil)
+	if e != nil {
+		return nil, e
+	}
+
+	return r.Data, nil
 }

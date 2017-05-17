@@ -52,16 +52,20 @@ func (org *Organization) DelType(id string, isUnit bool) error {
 	return org.l.Del(dq)
 }
 
-// AllType in ldap server
-func (org *Organization) AllType(isUnit bool) ([]map[string]interface{}, error) {
-	return org.search(org.typeSC(``, isUnit))
+// Types in ldap server
+func (org *Organization) Types(isUnit bool, pageSize uint32, cookie []byte) (*SearchResult, error) {
+	return org.searchType(``, isUnit, pageSize, cookie)
 }
 
 // TypeByIDs ...
 func (org *Organization) TypeByIDs(ids []string, isUnit bool) ([]map[string]interface{}, error) {
-	filter, err := scConvertIDsToFilter(ids)
+	filter, err := sqConvertIDsToFilter(ids)
 	if err != nil {
 		return nil, err
 	}
-	return org.search(org.typeSC(filter, isUnit))
+	r, e := org.searchType(filter, isUnit, 0, nil)
+	if e != nil {
+		return nil, e
+	}
+	return r.Data, nil
 }
