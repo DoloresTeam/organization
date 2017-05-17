@@ -71,5 +71,5 @@ func TestDelType(t *testing.T) {
 
 func neworg() (*Organization, error) {
 
-	return NewOrganizationWithSimpleBind(`dc=dolores,dc=store`, `localhost`, `cn=admin,dc=dolores,dc=store`, `secret`, 389)
+	return NewOrganizationWithSimpleBind(`dc=dolores,dc=store`, `dolores.store`, `cn=admin,dc=dolores,dc=store`, `dolores`, 389)
 }

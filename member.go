@@ -1,8 +1,6 @@
 package organization
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -12,11 +10,7 @@ import (
 // AuthMember ...
 func (org *Organization) AuthMember(telephoneNumber, pwd string) (string, error) {
 
-	m := md5.New()
-	m.Write([]byte(pwd))
-	hexBytes := m.Sum(nil)
-
-	sq := searchRequest(org.parentDN(member), fmt.Sprintf(`(&(telephoneNumber=%s)(userPassword=%s))`, telephoneNumber, fmt.Sprintf(`{MD5}%s`, hex.EncodeToString(hexBytes))), []string{`id`})
+	sq := searchRequest(org.parentDN(member), fmt.Sprintf(`(&(telephoneNumber=%s)(userPassword=%s))`, telephoneNumber, fmt.Sprintf(`{MD5}%s`, pwd)), []string{`id`})
 
 	sr, err := org.l.Search(sq)
 	if err != nil {

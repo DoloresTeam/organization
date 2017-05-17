@@ -9,9 +9,9 @@ import (
 
 func TestAddMember(t *testing.T) {
 
-	if testing.Short() {
-		t.SkipNow()
-	}
+	// if testing.Short() {
+	// 	t.SkipNow()
+	// }
 
 	org, err := neworg()
 	if err != nil {
@@ -22,15 +22,17 @@ func TestAddMember(t *testing.T) {
 	m.Write([]byte(`123456`))
 	pwd := m.Sum(nil)
 
+	t.Log(hex.EncodeToString(pwd))
+
 	err = org.AddMember(map[string][]string{
-		`name`:            []string{`巩祥`},
-		`telephoneNumber`: []string{`13918839402`},
-		`cn`:              []string{`Kevin.Gong`},
-		`email`:           []string{`aoxianglele@icloud.com`},
+		`name`:            []string{`Heath.Wang`},
+		`telephoneNumber`: []string{`18627800585`},
+		`cn`:              []string{`王聪灵`},
+		`email`:           []string{`heath.wang@dolores.store`},
 		`title`:           []string{`Developer`},
-		`rbacRole`:        []string{`b49jug06h301nm494sd0`},
-		`rbacType`:        []string{`b49jtn06h301mgko5jo0`},
-		`unitID`:          []string{`b49kdrg6h302hrpggg8g`},
+		`rbacRole`:        []string{`b4ds07lhfpcr37ut14a0`},
+		`rbacType`:        []string{`b4drqelhfpcqn7f7du5g`},
+		`unitID`:          []string{`b4ds0t5hfpcr4h3thtd0`},
 		`userPassword`:    []string{fmt.Sprintf(`{MD5}%s`, hex.EncodeToString(pwd))},
 	})
 
@@ -41,16 +43,20 @@ func TestAddMember(t *testing.T) {
 
 func TestAuthMember(t *testing.T) {
 
-	if testing.Short() {
-		t.SkipNow()
-	}
+	// if testing.Short() {
+	// 	t.SkipNow()
+	// }
 
 	org, err := neworg()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	id, err := org.AuthMember(`13918839401`, `123456`)
+	m := md5.New()
+	m.Write([]byte(`123456`))
+	pwd := m.Sum(nil)
+
+	id, err := org.AuthMember(`18627800585`, hex.EncodeToString(pwd))
 	if err != nil {
 		t.Fatal(err)
 	}

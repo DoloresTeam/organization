@@ -47,10 +47,10 @@ func TestAddUnit(t *testing.T) {
 
 	org, _ := neworg()
 
-	err := org.AddUnit(`b49kdrg6h302hrpggg8g`, map[string][]string{
-		`ou`:          []string{`Test`},
-		`description`: []string{`This is test unit's description`},
-		`rbacType`:    []string{`b49jtn06h301mgko5jng`},
+	err := org.AddUnit(``, map[string][]string{
+		`ou`:          []string{`iOS-Developer`},
+		`description`: []string{`iOS-DEveloper is a test ou`},
+		`rbacType`:    []string{`b4drradhfpcqnna2pvh0`},
 	})
 
 	if err != nil {
