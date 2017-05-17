@@ -9,9 +9,9 @@ import (
 
 func TestAddMember(t *testing.T) {
 
-	// if testing.Short() {
-	// 	t.SkipNow()
-	// }
+	if testing.Short() {
+		t.SkipNow()
+	}
 
 	org, err := neworg()
 	if err != nil {
@@ -30,6 +30,8 @@ func TestAddMember(t *testing.T) {
 		`cn`:              []string{`王聪灵`},
 		`email`:           []string{`heath.wang@dolores.store`},
 		`title`:           []string{`Developer`},
+		`thirdAccount`:    []string{`heath`},
+		`thirdPassword`:   []string{`111`},
 		`rbacRole`:        []string{`b4ds07lhfpcr37ut14a0`},
 		`rbacType`:        []string{`b4drqelhfpcqn7f7du5g`},
 		`unitID`:          []string{`b4ds0t5hfpcr4h3thtd0`},
@@ -43,9 +45,9 @@ func TestAddMember(t *testing.T) {
 
 func TestAuthMember(t *testing.T) {
 
-	// if testing.Short() {
-	// 	t.SkipNow()
-	// }
+	if testing.Short() {
+		t.SkipNow()
+	}
 
 	org, err := neworg()
 	if err != nil {
