@@ -122,7 +122,7 @@ func (org *Organization) OrganizationMemberByMemberID(id string) ([]map[string]i
 		return nil, err
 	}
 
-	sq := &searchRequest{dn, filter, memberSignleAttrs[:], memberMutAttrs[:], 0, nil}
+	sq := &searchRequest{dn, filter, append(memberSignleAttrs[:], `thirdAccount`), memberMutAttrs[:], 0, nil}
 
 	r, e := org.search(sq)
 	if e != nil {

@@ -37,3 +37,16 @@ func (p *Permission) Replace(ids []string) {
 	p.types = mapset.NewSet()
 	p.Add(ids)
 }
+
+// TypeIDs ...
+func (p *Permission) TypeIDs() []string {
+
+	it := p.types.Iter()
+
+	var ids []string
+	for id := range it {
+		ids = append(ids, id.(string))
+	}
+
+	return ids
+}

@@ -52,22 +52,20 @@ func (rbacx *RBACX) RoleByID(id string) (*Role, error) {
 }
 
 // PermissionByID ...
-func (rbacx *RBACX) PermissionByID(id string, isUnit bool) (*Permission, error) {
+func (rbacx *RBACX) PermissionByID(id string) (*Permission, error) {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()
 
 	for _, role := range rbacx.roles {
-		if isUnit {
-			for _, p := range role.unitPermissions {
-				if p.ID == id {
-					return p, nil
-				}
+		// id 具有全局唯一性
+		for _, p := range role.unitPermissions {
+			if p.ID == id {
+				return p, nil
 			}
-		} else {
-			for _, p := range role.memberPermissions {
-				if p.ID == id {
-					return p, nil
-				}
+		}
+		for _, p := range role.memberPermissions {
+			if p.ID == id {
+				return p, nil
 			}
 		}
 	}

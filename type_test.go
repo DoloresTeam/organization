@@ -15,15 +15,17 @@ func TestAddType(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = org.AddType(`TestAndType`, `This is TestDescription`, true)
+	id, err := org.AddType(`TestAndType`, `This is TestDescription`, true)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(id)
 
-	err = org.AddType(`TestAndType`, `This is TestDescription`, false)
+	id, err = org.AddType(`TestAndType`, `This is TestDescription`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(id)
 }
 
 func TestAllTypes(t *testing.T) {
@@ -49,6 +51,23 @@ func TestAllTypes(t *testing.T) {
 	// t.Log(`fileter id:b46otklhfpcs0pe51am0 b46otklhfpcs0pe51am0`)
 	for _, ty := range types.Data {
 		t.Log(ty)
+	}
+}
+
+func TestModifyType(t *testing.T) {
+
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	org, err := neworg()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = org.ModifyType(`b4f8h9dhfpci6tfa4jj0`, `Modify Type Name`, `Modify Type Description`, true)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

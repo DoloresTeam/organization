@@ -31,7 +31,7 @@ func TestFind(t *testing.T) {
 	}
 	t.Log(role)
 
-	p, err := rbacx.PermissionByID(`1`, false)
+	p, err := rbacx.PermissionByID(`1`)
 	if err != nil {
 		t.Fatal(err)
 	}

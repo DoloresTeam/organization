@@ -10,11 +10,11 @@ import (
 // AddRole to ldap server, this method will automatically update org's rbacx
 func (org *Organization) AddRole(name, description string, ups, pps []string) error {
 
-	upObjects, err := org.convertIDToObject(ups, true)
+	upObjects, err := org.convertIDToObject(ups)
 	if err != nil {
 		return err
 	}
-	ppObjects, err := org.convertIDToObject(pps, false)
+	ppObjects, err := org.convertIDToObject(pps)
 	if err != nil {
 		return err
 	}
@@ -60,11 +60,11 @@ func (org *Organization) RemoveRole(id string) error {
 // ModifyRole in ldap server, automatically update org's rbacx
 func (org *Organization) ModifyRole(id, name, description string, ups, pps []string) error {
 
-	upObjects, err := org.convertIDToObject(ups, true)
+	upObjects, err := org.convertIDToObject(ups)
 	if err != nil {
 		return err
 	}
-	ppObjects, err := org.convertIDToObject(pps, true)
+	ppObjects, err := org.convertIDToObject(pps)
 	if err != nil {
 		return err
 	}
@@ -158,16 +158,16 @@ func (org *Organization) RoleIDsByPermissionID(id string, isUnit bool) ([]string
 	return ids, nil
 }
 
-func (org *Organization) convertIDToObject(ids []string, isUnit bool) ([]*gorbacx.Permission, error) {
+func (org *Organization) convertIDToObject(ids []string) ([]*gorbacx.Permission, error) {
 
 	var objects []*gorbacx.Permission // 权限有效性判断
 
 	for _, id := range ids {
-		p, _ := org.rbacx.PermissionByID(id, isUnit)
+		p, _ := org.rbacx.PermissionByID(id)
 		if p != nil {
 			objects = append(objects, p)
 		} else {
-			infos, _ := org.PermissionByIDs([]string{id}, isUnit)
+			infos, _ := org.PermissionByIDs([]string{id})
 			if len(infos) != 1 {
 				return nil, fmt.Errorf(`convert failed no this permission info id: %s`, id)
 			}

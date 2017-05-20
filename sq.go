@@ -76,27 +76,27 @@ func (org *Organization) search(sq *searchRequest) (*SearchResult, error) {
 	return &SearchResult{size, cookie, data}, nil
 }
 
-func (org *Organization) searchType(filter string, isUnit bool, pageSize uint32, cookie []byte) (*SearchResult, error) {
+func (org *Organization) searchType(filter, dn string, pageSize uint32, cookie []byte) (*SearchResult, error) {
 	if len(filter) == 0 {
 		filter = `(objectClass=doloresType)`
 	} else {
 		filter = fmt.Sprintf(`(&(objectClass=doloresType)%s)`, filter)
 	}
-	return org.search(&searchRequest{org.parentDN(typeCategory(isUnit)),
+	return org.search(&searchRequest{(dn),
 		filter,
-		[]string{`id`, `cn`, `description`}, nil,
+		[]string{`id`, `cn`, `description`, `modifyTimestamp`}, nil,
 		pageSize,
 		cookie,
 	})
 }
 
-func (org *Organization) searchPermission(filter string, isUnit bool, pageSize uint32, cookie []byte) (*SearchResult, error) {
+func (org *Organization) searchPermission(filter, dn string, pageSize uint32, cookie []byte) (*SearchResult, error) {
 	if len(filter) == 0 {
 		filter = `(objectClass=permission)`
 	} else {
 		filter = fmt.Sprintf(`(&(objectClass=permission)%s)`, filter)
 	}
-	return org.search(&searchRequest{org.parentDN(permissionCategory(isUnit)),
+	return org.search(&searchRequest{dn,
 		filter,
 		[]string{`id`, `cn`, `description`},
 		[]string{`rbacType`},

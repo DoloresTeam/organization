@@ -10,7 +10,7 @@ import (
 // AddPermission to ldap server
 func (org *Organization) AddPermission(name, description string, types []string, isUnit bool) error {
 
-	ts, _ := org.TypeByIDs(types, isUnit)
+	ts, _ := org.TypeByIDs(types)
 	if len(ts) != len(types) {
 		return errors.New(`invalid types`)
 	}
@@ -46,12 +46,6 @@ func (org *Organization) ModifyPermission(id, name, description string, types []
 	err := org.l.Modify(mq)
 	if err != nil {
 		return err
-	}
-
-	// 更新 rbacx 内部数据
-	p, _ := org.rbacx.PermissionByID(id, isUnit)
-	if p != nil {
-		p.Replace(types)
 	}
 
 	return nil
@@ -98,20 +92,34 @@ func (org *Organization) PermissionByType(dtype string, isUnit bool) ([]string, 
 
 // Permissions in ldap
 func (org *Organization) Permissions(isUnit bool, pageSize uint32, cookie []byte) (*SearchResult, error) {
-	return org.searchPermission(``, isUnit, pageSize, cookie)
+	return org.searchPermission(``, org.parentDN(permissionCategory(isUnit)), pageSize, cookie)
 }
 
 // PermissionByIDs in ldap
-func (org *Organization) PermissionByIDs(ids []string, isUnit bool) ([]map[string]interface{}, error) {
+func (org *Organization) PermissionByIDs(ids []string) ([]map[string]interface{}, error) {
 	filter, err := sqConvertIDsToFilter(ids)
 	if err != nil {
 		return nil, err
 	}
-
-	r, e := org.searchPermission(filter, isUnit, 0, nil)
+	dn := fmt.Sprintf(`ou=permission, %s`, org.subffix)
+	r, e := org.searchPermission(filter, dn, 0, nil)
 	if e != nil {
 		return nil, e
 	}
 
 	return r.Data, nil
+}
+
+// PermissionByID in ldap
+func (org *Organization) PermissionByID(id string) (map[string]interface{}, error) {
+
+	rs, e := org.PermissionByIDs([]string{id})
+	if e != nil {
+		return nil, e
+	}
+	if len(rs) != 1 {
+		return nil, errors.New(`found many results.`)
+	}
+
+	return rs[0], nil
 }
