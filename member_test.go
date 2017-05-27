@@ -105,3 +105,22 @@ func TestFetchOrgMemberByID(t *testing.T) {
 	}
 	t.Log(ids)
 }
+
+func TestFetchAllMembers(t *testing.T) {
+
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	org, err := neworg()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sr, err := org.Members(30, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(sr.Data)
+}

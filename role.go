@@ -1,6 +1,7 @@
 package organization
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/DoloresTeam/organization/gorbacx"
@@ -119,17 +120,25 @@ func (org *Organization) Roles(pageSize uint32, cookie []byte) (*SearchResult, e
 	return org.searchRole(``, pageSize, cookie)
 }
 
+// RoleByID ...
+func (org *Organization) RoleByID(id string) (map[string]interface{}, error) {
+	sr, e := org.RoleByIDs([]string{id})
+	if e != nil {
+		return nil, e
+	}
+	if len(sr.Data) != 1 {
+		return nil, errors.New(`found many roles`)
+	}
+	return sr.Data[0], nil
+}
+
 // RoleByIDs in ldap
-func (org *Organization) RoleByIDs(ids []string) ([]map[string]interface{}, error) {
+func (org *Organization) RoleByIDs(ids []string) (*SearchResult, error) {
 	filter, err := sqConvertIDsToFilter(ids)
 	if err != nil {
 		return nil, err
 	}
-	r, e := org.searchRole(filter, 0, nil)
-	if e != nil {
-		return nil, e
-	}
-	return r.Data, nil
+	return org.searchRole(filter, 0, nil)
 }
 
 // RoleIDsByPermissionID which role contain this permission
@@ -167,11 +176,11 @@ func (org *Organization) convertIDToObject(ids []string) ([]*gorbacx.Permission,
 		if p != nil {
 			objects = append(objects, p)
 		} else {
-			infos, _ := org.PermissionByIDs([]string{id})
-			if len(infos) != 1 {
+			r, _ := org.PermissionByIDs([]string{id})
+			if len(r.Data) != 1 {
 				return nil, fmt.Errorf(`convert failed no this permission info id: %s`, id)
 			}
-			objects = append(objects, permissionWithLDAP(infos[0]))
+			objects = append(objects, permissionWithLDAP(r.Data[0]))
 		}
 	}
 

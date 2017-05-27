@@ -10,7 +10,7 @@ func TestUnitByID(t *testing.T) {
 
 	org, _ := neworg()
 
-	r, e := org.UnitByIDs([]string{`b4ds0t5hfpcr4h3thtd0`})
+	r, e := org.UnitByIDs([]string{`b4ju9dthfpcjdopdqcl0`})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -29,7 +29,7 @@ func TestOrganizationUnitByMemberID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r, e := org.OrganizationUnitByMemberID(`b49kehg6h302jg98oi70`)
+	r, e := org.OrganizationUnitByMemberID(`b4ju9dthfpcjdopdqcl0`)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -47,9 +47,9 @@ func TestAddUnit(t *testing.T) {
 
 	org, _ := neworg()
 
-	err := org.AddUnit(``, map[string][]string{
-		`ou`:          []string{`iOS-Developer`},
-		`description`: []string{`iOS-DEveloper is a test ou`},
+	_, err := org.AddUnit(`b4jv4llhfpcjtv6o07og`, map[string][]string{
+		`ou`:          []string{`iOS-Tester-sub`},
+		`description`: []string{`iOS-Tester-sub is a test ou`},
 		`rbacType`:    []string{`b4drradhfpcqnna2pvh0`},
 	})
 

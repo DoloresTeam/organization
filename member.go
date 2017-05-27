@@ -7,7 +7,7 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-var memberSignleAttrs = [...]string{`id`, `name`, `email`, `cn`, `title`, `telephoneNumber`, `labeledURI`, `gender`}
+var memberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`}
 var memberSignleACLAttrs = [...]string{`thirdAccount`, `thirdPassword`}
 
 var memberMutAttrs = [...]string{`email`, `title`, `unitID`}
@@ -67,6 +67,17 @@ func (org *Organization) AuthMember(telephoneNumber, pwd string) (string, error)
 		return ``, errors.New(`404 Not Found`)
 	}
 	return r.Data[0][`id`].(string), nil
+}
+
+// Members return all members
+func (org *Organization) Members(pageSize uint32, cookie []byte) (*SearchResult, error) {
+
+	sq := &searchRequest{
+		org.parentDN(member), `(objectClass=member)`,
+		append(memberSignleAttrs[:], memberSignleACLAttrs[:]...),
+		append(memberMutAttrs[:], memberMutACLAttrs[:]...), 0, nil}
+
+	return org.search(sq)
 }
 
 // RoleIDsByMemberID ...

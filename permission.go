@@ -8,14 +8,15 @@ import (
 )
 
 // AddPermission to ldap server
-func (org *Organization) AddPermission(name, description string, types []string, isUnit bool) error {
+func (org *Organization) AddPermission(name, description string, types []string, isUnit bool) (string, error) {
 
 	ts, _ := org.TypeByIDs(types)
 	if len(ts) != len(types) {
-		return errors.New(`invalid types`)
+		return ``, errors.New(`invalid types`)
 	}
 
-	dn := org.dn(generatorID(), permissionCategory(isUnit))
+	id := generatorID()
+	dn := org.dn(id, permissionCategory(isUnit))
 	aq := ldap.NewAddRequest(dn)
 
 	aq.Attribute(`objectClass`, []string{`permission`, `top`})
@@ -24,7 +25,7 @@ func (org *Organization) AddPermission(name, description string, types []string,
 	aq.Attribute(`description`, []string{description})
 	aq.Attribute(`rbacType`, types)
 
-	return org.l.Add(aq)
+	return id, org.l.Add(aq)
 }
 
 // ModifyPermission in ldap
@@ -96,18 +97,14 @@ func (org *Organization) Permissions(isUnit bool, pageSize uint32, cookie []byte
 }
 
 // PermissionByIDs in ldap
-func (org *Organization) PermissionByIDs(ids []string) ([]map[string]interface{}, error) {
+func (org *Organization) PermissionByIDs(ids []string) (*SearchResult, error) {
 	filter, err := sqConvertIDsToFilter(ids)
 	if err != nil {
 		return nil, err
 	}
 	dn := fmt.Sprintf(`ou=permission, %s`, org.subffix)
-	r, e := org.searchPermission(filter, dn, 0, nil)
-	if e != nil {
-		return nil, e
-	}
 
-	return r.Data, nil
+	return org.searchPermission(filter, dn, 0, nil)
 }
 
 // PermissionByID in ldap
@@ -117,9 +114,9 @@ func (org *Organization) PermissionByID(id string) (map[string]interface{}, erro
 	if e != nil {
 		return nil, e
 	}
-	if len(rs) != 1 {
-		return nil, errors.New(`found many results.`)
+	if len(rs.Data) != 1 {
+		return nil, errors.New(`found many results`)
 	}
 
-	return rs[0], nil
+	return rs.Data[0], nil
 }

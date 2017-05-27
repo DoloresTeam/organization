@@ -41,9 +41,9 @@ func TestFilterRole(t *testing.T) {
 	}
 
 	t.Log(`filter role ` + `b47kco86h3053ecopjd0`)
-	rs, err = org.RoleByIDs([]string{`b47kco86h3053ecopjd0`})
+	rss, err := org.RoleByIDs([]string{`b47kco86h3053ecopjd0`})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(rs)
+	t.Log(rss)
 }

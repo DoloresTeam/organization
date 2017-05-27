@@ -59,23 +59,23 @@ func (org *Organization) initial() error {
 	var roles []*gorbacx.Role
 	for _, v := range rs {
 
-		unitInfos, err := org.PermissionByIDs(v[`upid`].([]string))
+		urs, err := org.PermissionByIDs(v[`upid`].([]string))
 		if err != nil {
 			return err
 		}
 
-		memberInfos, err := org.PermissionByIDs(v[`ppid`].([]string))
+		mrs, err := org.PermissionByIDs(v[`ppid`].([]string))
 		if err != nil {
 			return err
 		}
 
 		var ups []*gorbacx.Permission
-		for _, info := range unitInfos {
+		for _, info := range urs.Data {
 			ups = append(ups, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
 		}
 
 		var mps []*gorbacx.Permission
-		for _, info := range memberInfos {
+		for _, info := range mrs.Data {
 			mps = append(mps, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
 		}
 
@@ -84,7 +84,7 @@ func (org *Organization) initial() error {
 
 	org.rbacx.Add(roles)
 
-	org.rbacx.PrettyPrint()
+	// org.rbacx.PrettyPrint()
 
 	return nil
 }

@@ -3,6 +3,7 @@ package organization
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	ldap "gopkg.in/ldap.v2"
 )
@@ -56,8 +57,13 @@ func (org *Organization) DelType(id string, isUnit bool) error {
 
 // Types in ldap server
 func (org *Organization) Types(isUnit bool, pageSize uint32, cookie []byte) (*SearchResult, error) {
-
-	return org.searchType(``, org.parentDN(typeCategory(isUnit)), pageSize, cookie)
+	sq := &searchRequest{
+		org.parentDN(typeCategory(isUnit)),
+		`(objectClass=doloresType)`,
+		[]string{`id`, `cn`, `description`, `modifyTimestamp`}, nil,
+		pageSize,
+		cookie}
+	return org.search(sq)
 }
 
 // TypeByIDs ...
@@ -67,11 +73,36 @@ func (org *Organization) TypeByIDs(ids []string) ([]map[string]interface{}, erro
 		return nil, err
 	}
 	dn := fmt.Sprintf(`ou=type,%s`, org.subffix)
-	r, e := org.searchType(filter, dn, 0, nil)
-	if e != nil {
-		return nil, e
+
+	sq := ldap.NewSearchRequest(dn,
+		ldap.ScopeWholeSubtree,
+		ldap.DerefAlways,
+		0, 0, false, filter, []string{`id`, `cn`, `description`}, nil)
+
+	sr, err := org.l.Search(sq)
+	if err != nil {
+		return nil, err
 	}
-	return r.Data, nil
+
+	var result []map[string]interface{}
+
+	for _, e := range sr.Entries {
+		isUnit := false
+		if strings.Contains(e.DN, `ou=unit`) {
+			isUnit = true
+		}
+		result = append(result, map[string]interface{}{
+			`id`:          e.GetAttributeValue(`id`),
+			`cn`:          e.GetAttributeValue(`cn`),
+			`description`: e.GetAttributeValue(`description`),
+			`isUnit`:      isUnit,
+		})
+	}
+
+	if result == nil {
+		return nil, errors.New(`not found`)
+	}
+	return result, nil
 }
 
 // TypeByID ...
@@ -81,22 +112,11 @@ func (org *Organization) TypeByID(id string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(types) == 0 {
-		types, err = org.TypeByIDs([]string{id})
-		if err != nil {
-			return nil, err
-		}
-		if len(types) == 0 {
-			return nil, errors.New(`404 Not Found`)
-		}
-		t := types[0]
-		t[`isUnit`] = false
-		return t, nil
+	if len(types) != 1 {
+		return nil, errors.New(`found many types`)
 	}
 
-	t := types[0]
-	t[`isUnit`] = true
-	return t, nil
+	return types[0], nil
 }
 
 // TypeByPermissionID ...
