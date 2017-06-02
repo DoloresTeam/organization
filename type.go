@@ -41,12 +41,21 @@ func (org *Organization) ModifyType(id string, name, description string, isUnit 
 // DelType by id
 func (org *Organization) DelType(id string, isUnit bool) error {
 
-	pids, err := org.PermissionByType(id, isUnit)
-	if err != nil {
-		return err
+	pIDs, e := org.PermissionByType(id, isUnit)
+	if e != nil {
+		return e
 	}
-	if len(pids) > 0 {
-		return errors.New(`has Permission refrence this type,`)
+	if len(pIDs) != 0 {
+		return fmt.Errorf(`有权限规则包含此类型，请先修改权限规则 count: %d`, len(pIDs))
+	}
+
+	// 通过Type 找人
+	mIDs, e := org.MemberIDsByTypeIDs([]string{id})
+	if e != nil {
+		return e
+	}
+	if len(mIDs) != 0 {
+		return fmt.Errorf(`有员工属于此类型，请先修改员工所属类型 count: %d`, len(pIDs))
 	}
 
 	dn := org.dn(id, typeCategory(isUnit))
