@@ -62,6 +62,7 @@ func (org *Organization) search(sq *searchRequest) (*SearchResult, error) {
 		for _, m := range sq.mAttrs {
 			v[m] = e.GetAttributeValues(m)
 		}
+		v[`dn`] = e.DN
 		data = append(data, v)
 	}
 

@@ -3,6 +3,7 @@ package organization
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	ldap "gopkg.in/ldap.v2"
 )
@@ -40,7 +41,7 @@ func (org *Organization) ModifyPermission(id, name, description string, types []
 	if len(description) != 0 {
 		mq.Replace(`description`, []string{description})
 	}
-	if len(types) > 0 {
+	if types != nil {
 		mq.Replace(`rbacType`, types)
 	}
 
@@ -118,5 +119,10 @@ func (org *Organization) PermissionByID(id string) (map[string]interface{}, erro
 		return nil, errors.New(`found many results`)
 	}
 
-	return rs.Data[0], nil
+	p := rs.Data[0]
+	dn := p[`dn`].(string)
+	p[`isUnit`] = strings.Contains(dn, `ou=unit`)
+	delete(p, `dn`)
+
+	return p, nil
 }
