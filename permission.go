@@ -62,10 +62,11 @@ func (org *Organization) DelPermission(id string, isUnit bool) error {
 	}
 
 	if len(rids) > 0 {
-		return fmt.Errorf(`has role reference this permission %s`, rids)
+		return fmt.Errorf(`有角色/岗位引用当前权限 count %d`, len(rids))
 	}
 
-	dn := org.dn(id, role)
+	dn := org.dn(id, permissionCategory(isUnit))
+	fmt.Print(dn)
 	dq := ldap.NewDelRequest(dn, nil)
 
 	return org.l.Del(dq)
