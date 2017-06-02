@@ -74,14 +74,14 @@ func (org *Organization) AllUnit() ([]map[string]interface{}, error) {
 // OrganizationUnitByMemberID ...
 func (org *Organization) OrganizationUnitByMemberID(id string) ([]map[string]interface{}, error) {
 
-	filter, err := org.filterByMemberID(id, true)
+	filter, err := org.filterConditionByMemberID(id, true)
 	if err != nil {
 		return nil, err
 	}
 	return org.searchUnit(filter, false)
 }
 
-func (org *Organization) filterByMemberID(id string, isUnit bool) (string, error) {
+func (org *Organization) filterConditionByMemberID(id string, isUnit bool) (string, error) {
 
 	// 通过id 拿到所有的 角色
 	roleIDs, err := org.RoleIDsByMemberID(id)

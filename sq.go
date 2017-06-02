@@ -53,7 +53,8 @@ func (org *Organization) search(sq *searchRequest) (*SearchResult, error) {
 		return nil, err
 	}
 
-	var data []map[string]interface{}
+	data := make([]map[string]interface{}, 0)
+
 	for _, e := range lsr.Entries {
 		v := make(map[string]interface{}, 0)
 		for _, s := range sq.sAttrs {

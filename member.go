@@ -80,26 +80,24 @@ func (org *Organization) Members(pageSize uint32, cookie []byte) (*SearchResult,
 	return org.search(sq)
 }
 
-// RoleIDsByMemberID ...
-func (org *Organization) RoleIDsByMemberID(id string) ([]string, error) {
-
-	if len(id) == 0 {
-		return nil, errors.New(`id must not be empty`)
-	}
-
-	filter := fmt.Sprintf(`(id=%s)`, id)
-
-	sq := ldap.NewSearchRequest(org.parentDN(member),
-		ldap.ScopeSingleLevel,
-		ldap.DerefAlways, 0, 0, false, filter, []string{`rbacRole`}, nil)
-	sr, err := org.l.Search(sq)
+// MemberIDsByTypeIDs
+func (org *Organization) MemberIDsByTypeIDs(tids []string) ([]string, error) {
+	dn := org.parentDN(member)
+	filter, err := sqConvertArraysToFilter(`rbacType`, tids)
 	if err != nil {
 		return nil, err
 	}
-	if len(sr.Entries) != 1 {
-		return nil, errors.New(`can't find this member`)
+	sq := ldap.NewSearchRequest(dn, ldap.ScopeSingleLevel, ldap.DerefAlways,
+		0, 0, false, filter, []string{`id`}, nil)
+	sr, e := org.l.Search(sq)
+	if e != nil {
+		return nil, e
 	}
-	return sr.Entries[0].GetAttributeValues(`rbacRole`), nil
+	var ids []string
+	for _, entry := range sr.Entries {
+		ids = append(ids, entry.GetAttributeValue(`id`))
+	}
+	return ids, nil
 }
 
 // MemberByID search member by id
@@ -128,7 +126,7 @@ func (org *Organization) MemberByID(id string, containACL bool) (map[string]inte
 // OrganizationMemberByMemberID ...
 func (org *Organization) OrganizationMemberByMemberID(id string) ([]map[string]interface{}, error) {
 	dn := org.parentDN(member)
-	filter, err := org.filterByMemberID(id, false)
+	filter, err := org.filterConditionByMemberID(id, false)
 	if err != nil {
 		return nil, err
 	}
