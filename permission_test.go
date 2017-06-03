@@ -22,27 +22,27 @@ func TestSearchPermission(t *testing.T) {
 	}
 }
 
-func TestAddPermission(t *testing.T) {
-
-	if testing.Short() {
-		t.SkipNow()
-	}
-
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = org.AddPermission(`Test`, `This is Test Permission`, []string{`b4drqelhfpcqn7f7du50`}, true)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = org.AddPermission(`Test`, `This is Test Permission`, []string{`b4drqelhfpcqn7f7du5g`}, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+// func TestAddPermission(t *testing.T) {
+//
+// 	if testing.Short() {
+// 		t.SkipNow()
+// 	}
+//
+// 	org, err := neworg()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+//
+// 	_, err = org.AddPermission(`Test`, `This is Test Permission`, []string{`b4drqelhfpcqn7f7du50`}, true)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+//
+// 	_, err = org.AddPermission(`Test`, `This is Test Permission`, []string{`b4drqelhfpcqn7f7du5g`}, false)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// }
 
 func TestFetchAllPermission(t *testing.T) {
 

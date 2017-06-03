@@ -9,15 +9,14 @@ import (
 )
 
 // AddRole to ldap server, this method will automatically update org's rbacx
-func (org *Organization) AddRole(name, description string, ups, pps []string) error {
+func (org *Organization) AddRole(name, description string, ups, pps []string) (string, error) {
 
-	upObjects, err := org.convertIDToObject(ups)
+	p, err := org.PermissionByIDs(append(ups, pps...))
 	if err != nil {
-		return err
+		return ``, err
 	}
-	ppObjects, err := org.convertIDToObject(pps)
-	if err != nil {
-		return err
+	if len(p.Data) != len(ups)+len(pps) {
+		return ``, errors.New(`permission ids is invalid`)
 	}
 
 	id := generatorID()
@@ -33,27 +32,37 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) er
 
 	err = org.l.Add(aq) // 先写数据库
 	if err != nil {
-		return err
+		return ``, err
 	}
 
-	role := gorbacx.NewRole(id, upObjects, ppObjects)
-	org.rbacx.Add([]*gorbacx.Role{role})
+	// TODO: Add Role
+	// role := gorbacx.NewRole(id, upObjects, ppObjects)
+	// org.rbacx.Add([]*gorbacx.Role{role})
 
-	return nil
+	return id, nil
 }
 
 // RemoveRole from ldap server, automatically update org's rbacx
-func (org *Organization) RemoveRole(id string) error {
+func (org *Organization) DelRole(id string) error {
+
+	// 判断有没有人引用这个Role
+	mIDs, err := org.MemberIDsByRoleID(id)
+	if err != nil {
+		return err
+	}
+	if len(mIDs) > 0 {
+		return fmt.Errorf(`尚有人引用此角色 count: %d`, len(mIDs))
+	}
 
 	dn := org.dn(id, role)
 	dq := ldap.NewDelRequest(dn, nil)
 
-	err := org.l.Del(dq)
+	err = org.l.Del(dq)
 	if err != nil {
 		return err
 	}
 
-	org.rbacx.Remove([]string{id})
+	// org.rbacx.Remove([]string{id})
 
 	return nil
 }
@@ -61,20 +70,28 @@ func (org *Organization) RemoveRole(id string) error {
 // ModifyRole in ldap server, automatically update org's rbacx
 func (org *Organization) ModifyRole(id, name, description string, ups, pps []string) error {
 
-	upObjects, err := org.convertIDToObject(ups)
+	p, err := org.PermissionByIDs(append(ups, pps...))
 	if err != nil {
 		return err
 	}
-	ppObjects, err := org.convertIDToObject(pps)
-	if err != nil {
-		return err
+	if len(p.Data) != len(ups)+len(pps) {
+		return errors.New(`permission ids is invalid`)
 	}
+
+	// upObjects, err := org.convertIDToObject(ups)
+	// if err != nil {
+	// 	return err
+	// }
+	// ppObjects, err := org.convertIDToObject(pps)
+	// if err != nil {
+	// 	return err
+	// }
 
 	dn := org.dn(id, role)
 	mq := ldap.NewModifyRequest(dn)
 
 	if len(name) > 0 {
-		mq.Replace(`name`, []string{name})
+		mq.Replace(`cn`, []string{name})
 	}
 	if len(description) > 0 {
 		mq.Replace(`description`, []string{description})
@@ -91,17 +108,17 @@ func (org *Organization) ModifyRole(id, name, description string, ups, pps []str
 		return err
 	}
 
-	role, err := org.rbacx.RoleByID(id)
-	if err != nil {
-		return err
-	}
-
-	if len(upObjects) > 0 {
-		role.Replace(upObjects, true)
-	}
-	if len(ppObjects) > 0 {
-		role.Replace(ppObjects, false)
-	}
+	// role, err := org.rbacx.RoleByID(id)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// if len(upObjects) > 0 {
+	// 	role.Replace(upObjects, true)
+	// }
+	// if len(ppObjects) > 0 {
+	// 	role.Replace(ppObjects, false)
+	// }
 
 	return nil
 }

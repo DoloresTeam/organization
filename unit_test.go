@@ -39,21 +39,21 @@ func TestOrganizationUnitByMemberID(t *testing.T) {
 	}
 }
 
-func TestAddUnit(t *testing.T) {
-
-	if testing.Short() {
-		t.SkipNow()
-	}
-
-	org, _ := neworg()
-
-	_, err := org.AddUnit(`b4jv4llhfpcjtv6o07og`, map[string][]string{
-		`ou`:          []string{`iOS-Tester-sub`},
-		`description`: []string{`iOS-Tester-sub is a test ou`},
-		`rbacType`:    []string{`b4drradhfpcqnna2pvh0`},
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+// func TestAddUnit(t *testing.T) {
+//
+// 	if testing.Short() {
+// 		t.SkipNow()
+// 	}
+//
+// 	org, _ := neworg()
+//
+// 	_, err := org.AddUnit(`b4jv4llhfpcjtv6o07og`, map[string][]string{
+// 		`ou`:          []string{`iOS-Tester-sub`},
+// 		`description`: []string{`iOS-Tester-sub is a test ou`},
+// 		`rbacType`:    []string{`b4drradhfpcqnna2pvh0`},
+// 	})
+//
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// }

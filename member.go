@@ -100,6 +100,23 @@ func (org *Organization) MemberIDsByTypeIDs(tids []string) ([]string, error) {
 	return ids, nil
 }
 
+// MemeberIDsByRoleID
+func (org *Organization) MemberIDsByRoleID(id string) ([]string, error) {
+	dn := org.parentDN(member)
+	filter := fmt.Sprintf(`(rbacRole=%s)`, id)
+	sq := ldap.NewSearchRequest(dn, ldap.ScopeSingleLevel, ldap.DerefAlways,
+		0, 0, false, filter, []string{`id`}, nil)
+	sr, e := org.l.Search(sq)
+	if e != nil {
+		return nil, e
+	}
+	var ids []string
+	for _, entry := range sr.Entries {
+		ids = append(ids, entry.GetAttributeValue(`id`))
+	}
+	return ids, nil
+}
+
 // MemberByID search member by id
 func (org *Organization) MemberByID(id string, containACL bool) (map[string]interface{}, error) {
 	sa := memberSignleAttrs[:]

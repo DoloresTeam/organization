@@ -2,23 +2,6 @@ package organization
 
 import "testing"
 
-func TestAddRole(t *testing.T) {
-
-	if testing.Short() {
-		t.SkipNow()
-	}
-
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = org.AddRole(`Role1`, `Test add Role 1`, []string{`b4drradhfpcqnna2pvg0`}, []string{`b4drrddhfpcqo3hr8100`})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestFilterRole(t *testing.T) {
 
 	if testing.Short() {

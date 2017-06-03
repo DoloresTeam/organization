@@ -4,29 +4,29 @@ import (
 	"testing"
 )
 
-func TestAddType(t *testing.T) {
-
-	if testing.Short() {
-		t.SkipNow()
-	}
-
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	id, err := org.AddType(`TestAndType`, `This is TestDescription`, true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(id)
-
-	id, err = org.AddType(`TestAndType`, `This is TestDescription`, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(id)
-}
+// func TestAddType(t *testing.T) {
+//
+// 	if testing.Short() {
+// 		t.SkipNow()
+// 	}
+//
+// 	org, err := neworg()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+//
+// 	id, err := org.AddType(`TestAndType`, `This is TestDescription`, true)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	t.Log(id)
+//
+// 	id, err = org.AddType(`TestAndType`, `This is TestDescription`, false)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	t.Log(id)
+// }
 
 func TestAllTypes(t *testing.T) {
 
