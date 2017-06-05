@@ -8,25 +8,23 @@ func TestUnitByID(t *testing.T) {
 		t.SkipNow()
 	}
 
-	org, _ := neworg()
-
-	r, e := org.UnitByIDs([]string{`b4ju9dthfpcjdopdqcl0`})
+	_, e := org.UnitByIDs([]string{`b4ds0t5hfpcr4h3thtd0`})
 	if e != nil {
 		t.Fatal(e)
 	}
 
-	t.Log(r)
+	ids, err := org.UnitSubIDs(`b4g14m0m20mgfdkk5bk0`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(ids)
 }
 
 func TestOrganizationUnitByMemberID(t *testing.T) {
 
 	if testing.Short() {
 		t.SkipNow()
-	}
-
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	r, e := org.OrganizationUnitByMemberID(`b4ju9dthfpcjdopdqcl0`)

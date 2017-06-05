@@ -48,11 +48,6 @@ func TestAuthMember(t *testing.T) {
 		t.SkipNow()
 	}
 
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	m := md5.New()
 	m.Write([]byte(`123456`))
 	pwd := m.Sum(nil)
@@ -75,11 +70,6 @@ func TestFetchMemberRoles(t *testing.T) {
 		t.SkipNow()
 	}
 
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	ids, err := org.RoleIDsByMemberID(`b49kehg6h302jg98oi70`)
 	if err != nil {
 		t.Fatal(err)
@@ -93,11 +83,6 @@ func TestFetchOrgMemberByID(t *testing.T) {
 		t.SkipNow()
 	}
 
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	ids, err := org.MemberByID(`b4dsitlhfpcs1aerd0l0`, true) // org.OrganizationMemberByMemberID(`b4dsitlhfpcs1aerd0l0`)
 	if err != nil {
 		t.Fatal(err)
@@ -109,11 +94,6 @@ func TestFetchAllMembers(t *testing.T) {
 
 	if testing.Short() {
 		t.SkipNow()
-	}
-
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	sr, err := org.Members(30, nil)

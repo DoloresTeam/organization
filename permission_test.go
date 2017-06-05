@@ -11,11 +11,6 @@ func TestSearchPermission(t *testing.T) {
 		t.SkipNow()
 	}
 
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	ps, _ := org.PermissionByType(`b4drqelhfpcqn7f7du50`, true)
 	if len(ps) == 0 {
 		t.Fatal(errors.New(`no permission`))
@@ -48,11 +43,6 @@ func TestFetchAllPermission(t *testing.T) {
 
 	if testing.Short() {
 		t.SkipNow()
-	}
-
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	ps, err := org.Permissions(false, 0, nil)

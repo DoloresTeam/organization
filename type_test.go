@@ -34,11 +34,6 @@ func TestAllTypes(t *testing.T) {
 		t.SkipNow()
 	}
 
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	types, err := org.Types(false, 0, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -60,12 +55,7 @@ func TestModifyType(t *testing.T) {
 		t.SkipNow()
 	}
 
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = org.ModifyType(`b4f8h9dhfpci6tfa4jj0`, `Modify Type Name`, `Modify Type Description`, true)
+	err := org.ModifyType(`b4f8h9dhfpci6tfa4jj0`, `Modify Type Name`, `Modify Type Description`, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,18 +67,8 @@ func TestDelType(t *testing.T) {
 		t.SkipNow()
 	}
 
-	org, err := neworg()
+	err := org.DelType(`b45v01dhfpcidf9rgtag`, true)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	err = org.DelType(`b45v01dhfpcidf9rgtag`, true)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func neworg() (*Organization, error) {
-
-	return NewOrganizationWithSimpleBind(`dc=dolores,dc=store`, `dolores.store`, `cn=admin,dc=dolores,dc=store`, `dolores`, 389)
 }

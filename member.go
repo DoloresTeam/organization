@@ -14,17 +14,19 @@ var memberMutAttrs = [...]string{`email`, `title`, `unitID`}
 var memberMutACLAttrs = [...]string{`rbacType`, `rbacRole`}
 
 // AddMember to ldap server
-func (org *Organization) AddMember(info map[string][]string) error {
+func (org *Organization) AddMember(info map[string][]string) (string, error) {
 
-	aq := ldap.NewAddRequest(org.dn(generatorID(), member))
+	id := generatorID()
+	aq := ldap.NewAddRequest(org.dn(id, member))
 
 	aq.Attribute(`objectClass`, []string{`member`, `top`})
+	aq.Attribute(`id`, []string{id})
 
 	for k, v := range info {
 		aq.Attribute(k, v)
 	}
 
-	return org.l.Add(aq)
+	return id, org.l.Add(aq)
 }
 
 // ModifyMember ...

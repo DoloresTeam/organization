@@ -1,7 +1,6 @@
 package organization
 
 import (
-	"errors"
 	"fmt"
 
 	ldap "gopkg.in/ldap.v2"
@@ -143,7 +142,8 @@ func (org *Organization) searchUnit(filter string, containACL bool) ([]map[strin
 	if e != nil {
 		return nil, e
 	}
-	var units []map[string]interface{}
+
+	units := make([]map[string]interface{}, 0)
 	for _, e := range sr.Entries {
 		unit := make(map[string]interface{}, 0)
 		unit[`id`] = e.GetAttributeValue(`id`)
@@ -151,6 +151,7 @@ func (org *Organization) searchUnit(filter string, containACL bool) ([]map[strin
 		unit[`description`] = e.GetAttributeValue(`description`)
 		if containACL {
 			unit[`rbacType`] = e.GetAttributeValues(`rbacType`)
+			unit[`dn`] = e.DN
 		}
 		dn, _ := ldap.ParseDN(e.DN)
 		if len(dn.RDNs) > 5 {
@@ -160,10 +161,20 @@ func (org *Organization) searchUnit(filter string, containACL bool) ([]map[strin
 		units = append(units, unit)
 	}
 
-	if units == nil {
-		return nil, errors.New(`not found`)
-	}
 	return units, nil
+}
+
+func (org *Organization) searchSubUnitIDs(dn string) ([]string, error) {
+	sq := ldap.NewSearchRequest(dn, ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false, `(objectClass=organizationalUnit)`, []string{`id`}, nil)
+	sr, err := org.l.Search(sq)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0)
+	for _, e := range sr.Entries {
+		ids = append(ids, e.GetAttributeValue(`id`))
+	}
+	return ids, nil
 }
 
 func sqConvertIDsToFilter(ids []string) (string, error) {

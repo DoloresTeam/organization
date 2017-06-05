@@ -8,11 +8,6 @@ func TestFilterRole(t *testing.T) {
 		t.SkipNow()
 	}
 
-	org, err := neworg()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	rs, err := org.AllRoles()
 	if err != nil {
 		t.Fatal(err)

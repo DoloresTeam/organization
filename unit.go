@@ -66,6 +66,23 @@ func (org *Organization) UnitByIDs(ids []string) ([]map[string]interface{}, erro
 	return org.searchUnit(filter, true)
 }
 
+func (org *Organization) UnitSubIDs(id string) ([]string, error) {
+
+	unit, err := org.UnitByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return org.searchSubUnitIDs(unit[`dn`].(string))
+}
+
+// DelUnitByID ...
+// func (org *Organization) DelUnitByID(id string) error {
+//
+// 	// 所有子部门都会被删除
+// 	// 如果部门下有人，那么不允许删除
+// }
+
 // AllUnit ...
 func (org *Organization) AllUnit() ([]map[string]interface{}, error) {
 	return org.searchUnit(``, true)
