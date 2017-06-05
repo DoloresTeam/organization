@@ -150,7 +150,7 @@ func (org *Organization) searchUnit(filter string, containACL bool) ([]map[strin
 		unit[`cn`] = e.GetAttributeValue(`ou`)
 		unit[`description`] = e.GetAttributeValue(`description`)
 		if containACL {
-			unit[`rbacType`] = e.GetAttributeValues(`rbacType`)
+			unit[`rbacType`] = e.GetAttributeValue(`rbacType`)
 			unit[`dn`] = e.DN
 		}
 		dn, _ := ldap.ParseDN(e.DN)
@@ -162,19 +162,6 @@ func (org *Organization) searchUnit(filter string, containACL bool) ([]map[strin
 	}
 
 	return units, nil
-}
-
-func (org *Organization) searchSubUnitIDs(dn string) ([]string, error) {
-	sq := ldap.NewSearchRequest(dn, ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false, `(objectClass=organizationalUnit)`, []string{`id`}, nil)
-	sr, err := org.l.Search(sq)
-	if err != nil {
-		return nil, err
-	}
-	ids := make([]string, 0)
-	for _, e := range sr.Entries {
-		ids = append(ids, e.GetAttributeValue(`id`))
-	}
-	return ids, nil
 }
 
 func sqConvertIDsToFilter(ids []string) (string, error) {

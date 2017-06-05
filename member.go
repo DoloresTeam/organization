@@ -8,10 +8,10 @@ import (
 )
 
 var memberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`}
-var memberSignleACLAttrs = [...]string{`thirdAccount`, `thirdPassword`}
+var memberSignleACLAttrs = [...]string{`thirdAccount`, `thirdPassword`, `rbacType`}
 
 var memberMutAttrs = [...]string{`email`, `title`, `unitID`}
-var memberMutACLAttrs = [...]string{`rbacType`, `rbacRole`}
+var memberMutACLAttrs = [...]string{`rbacRole`}
 
 // AddMember to ldap server
 func (org *Organization) AddMember(info map[string][]string) (string, error) {
@@ -45,12 +45,7 @@ func (org *Organization) ModifyMember(id string, info map[string][]string) error
 
 // DelMember by id
 func (org *Organization) DelMember(id string) error {
-	if len(id) == 0 {
-		return errors.New(`member id is empty`)
-	}
-
 	dq := ldap.NewDelRequest(fmt.Sprintf(`id=%s,%s`, id, org.parentDN(member)), nil)
-
 	return org.l.Del(dq)
 }
 
@@ -84,28 +79,29 @@ func (org *Organization) Members(pageSize uint32, cookie []byte) (*SearchResult,
 
 // MemberIDsByTypeIDs
 func (org *Organization) MemberIDsByTypeIDs(tids []string) ([]string, error) {
-	dn := org.parentDN(member)
 	filter, err := sqConvertArraysToFilter(`rbacType`, tids)
 	if err != nil {
 		return nil, err
 	}
-	sq := ldap.NewSearchRequest(dn, ldap.ScopeSingleLevel, ldap.DerefAlways,
-		0, 0, false, filter, []string{`id`}, nil)
-	sr, e := org.l.Search(sq)
-	if e != nil {
-		return nil, e
-	}
-	var ids []string
-	for _, entry := range sr.Entries {
-		ids = append(ids, entry.GetAttributeValue(`id`))
-	}
-	return ids, nil
+	return org.memberIDsByFilter(filter)
 }
 
 // MemeberIDsByRoleID
 func (org *Organization) MemberIDsByRoleID(id string) ([]string, error) {
-	dn := org.parentDN(member)
 	filter := fmt.Sprintf(`(rbacRole=%s)`, id)
+	return org.memberIDsByFilter(filter)
+}
+
+func (org *Organization) MemberIDsByDepartmentIDs(ids []string) ([]string, error) {
+	filter, err := sqConvertArraysToFilter(`unitID`, ids)
+	if err != nil {
+		return nil, err
+	}
+	return org.memberIDsByFilter(filter)
+}
+
+func (org *Organization) memberIDsByFilter(filter string) ([]string, error) {
+	dn := org.parentDN(member)
 	sq := ldap.NewSearchRequest(dn, ldap.ScopeSingleLevel, ldap.DerefAlways,
 		0, 0, false, filter, []string{`id`}, nil)
 	sr, e := org.l.Search(sq)

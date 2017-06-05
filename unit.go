@@ -42,6 +42,18 @@ func (org *Organization) AddUnit(parentID string, info map[string][]string) (str
 	return id, org.l.Add(aq)
 }
 
+func (org *Organization) ModifyUnit(id string, info map[string][]string) error {
+	unit, err := org.UnitByID(id)
+	if err != nil {
+		return err
+	}
+	mq := ldap.NewModifyRequest(unit[`dn`].(string))
+	for k, v := range info {
+		mq.Replace(k, v)
+	}
+	return org.l.Modify(mq)
+}
+
 // UnitByID ...
 func (org *Organization) UnitByID(id string) (map[string]interface{}, error) {
 
@@ -72,16 +84,55 @@ func (org *Organization) UnitSubIDs(id string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	dn := unit[`dn`].(string)
 
-	return org.searchSubUnitIDs(unit[`dn`].(string))
+	sq := ldap.NewSearchRequest(dn, ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false, `(objectClass=organizationalUnit)`, []string{`id`}, nil)
+	sr, err := org.l.Search(sq)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0)
+	for _, e := range sr.Entries {
+		ids = append(ids, e.GetAttributeValue(`id`))
+	}
+
+	return ids, nil
+}
+
+func (org *Organization) UnitByTypeIDs(ids []string) ([]map[string]interface{}, error) {
+	filter, err := sqConvertArraysToFilter(`rbacType`, ids)
+	if err != nil {
+		return nil, err
+	}
+	return org.searchUnit(filter, true)
 }
 
 // DelUnitByID ...
-// func (org *Organization) DelUnitByID(id string) error {
-//
-// 	// 所有子部门都会被删除
-// 	// 如果部门下有人，那么不允许删除
-// }
+func (org *Organization) DelUnit(id string) error {
+
+	ids, err := org.UnitSubIDs(id)
+	if err != nil {
+		return err
+	}
+
+	// 通过部门ID 找员工
+	mids, err := org.MemberIDsByDepartmentIDs(ids)
+	if err != nil {
+		return err
+	}
+	if len(mids) > 0 {
+		return fmt.Errorf(`此部门下包含员工，请先修改员工信息 count: %d`, len(mids))
+	}
+
+	unit, err := org.UnitByID(id)
+	if err != nil {
+		return err
+	}
+
+	dq := ldap.NewDelRequest(unit[`dn`].(string), nil)
+
+	return org.l.Del(dq)
+}
 
 // AllUnit ...
 func (org *Organization) AllUnit() ([]map[string]interface{}, error) {

@@ -49,13 +49,23 @@ func (org *Organization) DelType(id string, isUnit bool) error {
 		return fmt.Errorf(`有权限规则包含此类型，请先修改权限规则 count: %d`, len(pIDs))
 	}
 
-	// 通过Type 找人
-	mIDs, e := org.MemberIDsByTypeIDs([]string{id})
-	if e != nil {
-		return e
-	}
-	if len(mIDs) != 0 {
-		return fmt.Errorf(`有员工属于此类型，请先修改员工所属类型 count: %d`, len(pIDs))
+	if isUnit {
+		us, e := org.UnitByTypeIDs([]string{id})
+		if e != nil {
+			return e
+		}
+		if len(us) != 0 {
+			return fmt.Errorf(`有部门属于此类型，请先修改部门所属类型 count: %d`, len(pIDs))
+		}
+	} else {
+		// 通过Type 找人
+		mIDs, e := org.MemberIDsByTypeIDs([]string{id})
+		if e != nil {
+			return e
+		}
+		if len(mIDs) != 0 {
+			return fmt.Errorf(`有员工属于此类型，请先修改员工所属类型 count: %d`, len(pIDs))
+		}
 	}
 
 	dn := org.dn(id, typeCategory(isUnit))

@@ -40,7 +40,7 @@ func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port i
 	if err != nil {
 		return nil, errors.New(`dial ldap server failed`)
 	}
-	l.Debug = true
+
 	err = l.Bind(rootDN, rootPWD)
 	if err != nil {
 		return nil, err

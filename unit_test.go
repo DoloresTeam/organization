@@ -43,8 +43,6 @@ func TestOrganizationUnitByMemberID(t *testing.T) {
 // 		t.SkipNow()
 // 	}
 //
-// 	org, _ := neworg()
-//
 // 	_, err := org.AddUnit(`b4jv4llhfpcjtv6o07og`, map[string][]string{
 // 		`ou`:          []string{`iOS-Tester-sub`},
 // 		`description`: []string{`iOS-Tester-sub is a test ou`},
