@@ -8,7 +8,7 @@ import (
 )
 
 var memberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`}
-var memberSignleACLAttrs = [...]string{`thirdAccount`, `thirdPassword`, `rbacType`}
+var memberSignleACLAttrs = [...]string{`thirdAccount`, `rbacType`}
 
 var memberMutAttrs = [...]string{`email`, `title`, `unitID`}
 var memberMutACLAttrs = [...]string{`rbacRole`}
