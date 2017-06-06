@@ -2,6 +2,7 @@ package organization
 
 import (
 	"fmt"
+	"strings"
 
 	ldap "gopkg.in/ldap.v2"
 )
@@ -54,6 +55,9 @@ func (org *Organization) search(sq *searchRequest) (*SearchResult, error) {
 
 	data := make([]map[string]interface{}, 0)
 
+	// 所有的人不返回dn属性
+	shouldAppendDN := !strings.Contains(sq.dn, `ou=member`)
+
 	for _, e := range lsr.Entries {
 		v := make(map[string]interface{}, 0)
 		for _, s := range sq.sAttrs {
@@ -62,7 +66,9 @@ func (org *Organization) search(sq *searchRequest) (*SearchResult, error) {
 		for _, m := range sq.mAttrs {
 			v[m] = e.GetAttributeValues(m)
 		}
-		v[`dn`] = e.DN
+		if shouldAppendDN {
+			v[`dn`] = e.DN
+		}
 		data = append(data, v)
 	}
 

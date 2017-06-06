@@ -7,10 +7,10 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-var memberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`}
+var memberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`, `title`}
 var memberSignleACLAttrs = [...]string{`rbacType`}
 
-var memberMutAttrs = [...]string{`email`, `title`, `unitID`}
+var memberMutAttrs = [...]string{`email`, `unitID`}
 var memberMutACLAttrs = [...]string{`rbacRole`}
 
 // AddMember to ldap server
@@ -61,7 +61,7 @@ func (org *Organization) AuthMember(telephoneNumber, pwd string) (string, error)
 		return ``, e
 	}
 	if len(r.Data) != 1 {
-		return ``, errors.New(`404 Not Found`)
+		return ``, errors.New(`not found`)
 	}
 	return r.Data[0][`id`].(string), nil
 }
@@ -116,12 +116,15 @@ func (org *Organization) memberIDsByFilter(filter string) ([]string, error) {
 }
 
 // MemberByID search member by id
-func (org *Organization) MemberByID(id string, containACL bool) (map[string]interface{}, error) {
+func (org *Organization) MemberByID(id string, containACL bool, containPwd bool) (map[string]interface{}, error) {
 	sa := memberSignleAttrs[:]
 	ma := memberMutAttrs[:]
 	if containACL {
 		sa = append(sa, memberSignleACLAttrs[:]...)
 		ma = append(ma, memberMutACLAttrs[:]...)
+	}
+	if containPwd {
+		sa = append(sa, `thirdPassword`)
 	}
 
 	dn := org.parentDN(member)
@@ -133,7 +136,7 @@ func (org *Organization) MemberByID(id string, containACL bool) (map[string]inte
 		return nil, e
 	}
 	if len(r.Data) != 1 {
-		return nil, errors.New(`404 Not Found`)
+		return nil, errors.New(`not found`)
 	}
 	return r.Data[0], nil
 }
@@ -146,7 +149,7 @@ func (org *Organization) OrganizationMemberByMemberID(id string) ([]map[string]i
 		return nil, err
 	}
 
-	sq := &searchRequest{dn, filter, append(memberSignleAttrs[:], `thirdAccount`), memberMutAttrs[:], 0, nil}
+	sq := &searchRequest{dn, filter, memberSignleAttrs[:], memberMutAttrs[:], 0, nil}
 
 	r, e := org.search(sq)
 	if e != nil {

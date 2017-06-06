@@ -20,7 +20,7 @@ func TestAddDelMember(t *testing.T) {
 	// 添加一个用户
 	id, err := org.AddMember(map[string][]string{
 		`name`:            []string{`JustForTTTTTesting`},
-		`telephoneNumber`: []string{`1888888888`},
+		`telephoneNumber`: []string{`18888888888`},
 		`cn`:              []string{`王聪灵`},
 		`email`:           []string{`heath.wang@dolores.store`},
 		`title`:           []string{`Developer`},
@@ -37,7 +37,7 @@ func TestAddDelMember(t *testing.T) {
 	}
 
 	// 使用手机号和密码登录 然后返回用户ID
-	aid, err := org.AuthMember(`1888888888`, hex.EncodeToString(pwd))
+	aid, err := org.AuthMember(`18888888888`, hex.EncodeToString(pwd))
 	if err != nil {
 		t.Fatal(err)
 	}
