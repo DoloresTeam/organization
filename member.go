@@ -87,8 +87,11 @@ func (org *Organization) MemberIDsByTypeIDs(tids []string) ([]string, error) {
 }
 
 // MemeberIDsByRoleID
-func (org *Organization) MemberIDsByRoleID(id string) ([]string, error) {
-	filter := fmt.Sprintf(`(rbacRole=%s)`, id)
+func (org *Organization) MemberIDsByRoleIDs(rids []string) ([]string, error) {
+	filter, err := sqConvertArraysToFilter(`rbacRole`, rids)
+	if err != nil {
+		return nil, err
+	}
 	return org.memberIDsByFilter(filter)
 }
 

@@ -25,3 +25,8 @@ func TestFilterRole(t *testing.T) {
 	}
 	t.Log(rss)
 }
+
+func TestRBAC(t *testing.T) {
+
+	org.rbacx.PrettyPrint()
+}

@@ -20,6 +20,13 @@ func New() *RBACX {
 	}
 }
 
+func (rbacx *RBACX) Clear() {
+	rbacx.mutex.Lock()
+	defer rbacx.mutex.Unlock()
+
+	rbacx.roles = make(map[string]*Role, 0)
+}
+
 // Add ...
 func (rbacx *RBACX) Add(roles []*Role) {
 	rbacx.mutex.Lock()
@@ -99,16 +106,20 @@ func (rbacx *RBACX) MatchedTypes(roleIDs []string, isUnit bool) []string {
 
 // PrettyPrint ...
 func (rbacx *RBACX) PrettyPrint() {
-	fmt.Println(`rbacx PrettyPrint Begin`)
+	fmt.Println(`----------------------rbacx PrettyPrint Begin----------------------`)
+	fmt.Printf(`Role Count: %v`, len(rbacx.roles))
+	fmt.Println()
 	for _, role := range rbacx.roles {
-		fmt.Println(`----------------------`)
+		fmt.Printf(`Role: %s`, role.ID)
+		fmt.Println()
 		for _, v := range role.unitPermissions {
-			fmt.Println(v.ID, v.types)
+			fmt.Printf(`---up[%s]: %v`, v.ID, v.types.ToSlice())
+			fmt.Println()
 		}
-		fmt.Println(`~~~~~~~~~~~~~~~~~~~~~~~`)
 		for _, v := range role.memberPermissions {
-			fmt.Println(v.ID, v.types)
+			fmt.Printf(`---mp[%s]: %v`, v.ID, v.types.ToSlice())
+			fmt.Println()
 		}
 	}
-	fmt.Println(`rbacx PrettyPrint End`)
+	fmt.Println(`----------------------rbacx PrettyPrint End----------------------`)
 }

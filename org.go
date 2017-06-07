@@ -6,6 +6,7 @@ import (
 
 	"github.com/DoloresTeam/organization/gorbacx"
 
+	log "github.com/sirupsen/logrus"
 	ldap "gopkg.in/ldap.v2"
 )
 
@@ -25,10 +26,8 @@ func NewOrganization(subffix string, ldapBindConn *ldap.Conn) (*Organization, er
 
 	// TODO 验证ldap 的目录结构
 	org := &Organization{ldapBindConn, gorbacx.New(), subffix}
-	err := org.initial()
-	if err != nil {
-		return nil, err
-	}
+
+	org.RefreshRBAC()
 
 	return org, nil
 }
@@ -49,42 +48,49 @@ func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port i
 	return NewOrganization(subffix, l)
 }
 
-func (org *Organization) initial() error {
+func (org *Organization) RefreshRBAC() {
 
-	rs, err := org.AllRoles()
+	err := func() error {
+		org.rbacx.Clear()
+
+		rs, err := org.AllRoles()
+		if err != nil {
+			return err
+		}
+
+		var roles []*gorbacx.Role
+		for _, v := range rs {
+
+			urs, err := org.PermissionByIDs(v[`upid`].([]string))
+			if err != nil {
+				return err
+			}
+
+			mrs, err := org.PermissionByIDs(v[`ppid`].([]string))
+			if err != nil {
+				return err
+			}
+
+			var ups []*gorbacx.Permission
+			for _, info := range urs.Data {
+				ups = append(ups, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
+			}
+
+			var mps []*gorbacx.Permission
+			for _, info := range mrs.Data {
+				mps = append(mps, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
+			}
+
+			roles = append(roles, gorbacx.NewRole(v[`id`].(string), ups, mps))
+		}
+
+		org.rbacx.Add(roles)
+
+		org.rbacx.PrettyPrint()
+
+		return nil
+	}()
 	if err != nil {
-		return err
+		log.WithField(`file:method`, `org.og:RefreshRBAC`).Error(err)
 	}
-
-	var roles []*gorbacx.Role
-	for _, v := range rs {
-
-		urs, err := org.PermissionByIDs(v[`upid`].([]string))
-		if err != nil {
-			return err
-		}
-
-		mrs, err := org.PermissionByIDs(v[`ppid`].([]string))
-		if err != nil {
-			return err
-		}
-
-		var ups []*gorbacx.Permission
-		for _, info := range urs.Data {
-			ups = append(ups, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
-		}
-
-		var mps []*gorbacx.Permission
-		for _, info := range mrs.Data {
-			mps = append(mps, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
-		}
-
-		roles = append(roles, gorbacx.NewRole(v[`id`].(string), ups, mps))
-	}
-
-	org.rbacx.Add(roles)
-
-	// org.rbacx.PrettyPrint()
-
-	return nil
 }

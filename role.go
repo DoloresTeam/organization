@@ -11,12 +11,13 @@ import (
 // AddRole to ldap server, this method will automatically update org's rbacx
 func (org *Organization) AddRole(name, description string, ups, pps []string) (string, error) {
 
-	p, err := org.PermissionByIDs(append(ups, pps...))
+	upObjects, err := org.convertIDToObject(ups)
 	if err != nil {
 		return ``, err
 	}
-	if len(p.Data) != len(ups)+len(pps) {
-		return ``, errors.New(`permission ids is invalid`)
+	ppObjects, err := org.convertIDToObject(pps)
+	if err != nil {
+		return ``, err
 	}
 
 	id := generatorID()
@@ -35,9 +36,8 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) (s
 		return ``, err
 	}
 
-	// TODO: Add Role
-	// role := gorbacx.NewRole(id, upObjects, ppObjects)
-	// org.rbacx.Add([]*gorbacx.Role{role})
+	role := gorbacx.NewRole(id, upObjects, ppObjects)
+	org.rbacx.Add([]*gorbacx.Role{role})
 
 	return id, nil
 }
@@ -46,7 +46,7 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) (s
 func (org *Organization) DelRole(id string) error {
 
 	// 判断有没有人引用这个Role
-	mIDs, err := org.MemberIDsByRoleID(id)
+	mIDs, err := org.MemberIDsByRoleIDs([]string{id})
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (org *Organization) DelRole(id string) error {
 		return err
 	}
 
-	// org.rbacx.Remove([]string{id})
+	org.rbacx.Remove([]string{id})
 
 	return nil
 }
@@ -78,17 +78,12 @@ func (org *Organization) ModifyRole(id, name, description string, ups, pps []str
 		return errors.New(`permission ids is invalid`)
 	}
 
-	// upObjects, err := org.convertIDToObject(ups)
-	// if err != nil {
-	// 	return err
-	// }
-	// ppObjects, err := org.convertIDToObject(pps)
-	// if err != nil {
-	// 	return err
-	// }
+	r, err := org.RoleByID(id)
+	if err != nil {
+		return err
+	}
 
-	dn := org.dn(id, role)
-	mq := ldap.NewModifyRequest(dn)
+	mq := ldap.NewModifyRequest(r[`dn`].(string))
 
 	if len(name) > 0 {
 		mq.Replace(`cn`, []string{name})
@@ -108,17 +103,8 @@ func (org *Organization) ModifyRole(id, name, description string, ups, pps []str
 		return err
 	}
 
-	// role, err := org.rbacx.RoleByID(id)
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// if len(upObjects) > 0 {
-	// 	role.Replace(upObjects, true)
-	// }
-	// if len(ppObjects) > 0 {
-	// 	role.Replace(ppObjects, false)
-	// }
+	org.refreshRBACIfNeeded(r[`upid`].([]string), ups)
+	org.refreshRBACIfNeeded(r[`ppid`].([]string), pps)
 
 	return nil
 }
@@ -181,14 +167,9 @@ func (org *Organization) RoleIDsByMemberID(id string) ([]string, error) {
 }
 
 // RoleIDsByPermissionID which role contain this permission
-func (org *Organization) RoleIDsByPermissionID(id string, isUnit bool) ([]string, error) {
+func (org *Organization) RoleIDsByPermissionID(id string) ([]string, error) {
 
-	var filter string
-	if isUnit {
-		filter = fmt.Sprintf(`(upid=%s)`, id)
-	} else {
-		filter = fmt.Sprintf(`(ppid=%s)`, id)
-	}
+	filter := fmt.Sprintf(`(|(upid=%s)(ppid=%s))`, id, id)
 	dn := org.parentDN(role)
 
 	sq := &searchRequest{dn, filter, []string{`id`}, nil, 0, nil}
@@ -215,17 +196,16 @@ func (org *Organization) convertIDToObject(ids []string) ([]*gorbacx.Permission,
 		if p != nil {
 			objects = append(objects, p)
 		} else {
-			r, _ := org.PermissionByIDs([]string{id})
-			if len(r.Data) != 1 {
-				return nil, fmt.Errorf(`convert failed no this permission info id: %s`, id)
+			r, err := org.PermissionByID(id)
+			if r == nil {
+				if err == nil {
+					err = fmt.Errorf(`convert failed no this permission info id: %s`, id)
+				}
+				return nil, err
 			}
-			objects = append(objects, permissionWithLDAP(r.Data[0]))
+			objects = append(objects, gorbacx.NewPermission(r[`id`].(string), r[`rbacType`].([]string)))
 		}
 	}
 
 	return objects, nil
-}
-
-func permissionWithLDAP(info map[string]interface{}) *gorbacx.Permission {
-	return gorbacx.NewPermission(info[`id`].(string), info[`types`].([]string))
 }

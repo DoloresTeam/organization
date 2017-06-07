@@ -30,10 +30,14 @@ func (org *Organization) AddPermission(name, description string, types []string,
 }
 
 // ModifyPermission in ldap
-func (org *Organization) ModifyPermission(id, name, description string, types []string, isUnit bool) error {
+func (org *Organization) ModifyPermission(id, name, description string, types []string) error {
 
-	dn := org.dn(id, permissionCategory(isUnit))
-	mq := ldap.NewModifyRequest(dn)
+	op, err := org.PermissionByID(id)
+	if err != nil {
+		return err
+	}
+
+	mq := ldap.NewModifyRequest(op[`dn`].(string))
 
 	if len(name) != 0 {
 		mq.Replace(`cn`, []string{name})
@@ -45,18 +49,23 @@ func (org *Organization) ModifyPermission(id, name, description string, types []
 		mq.Replace(`rbacType`, types)
 	}
 
-	err := org.l.Modify(mq)
+	err = org.l.Modify(mq)
 	if err != nil {
 		return err
+	}
+
+	rids, _ := org.RoleIDsByPermissionID(id)
+	if len(rids) != 0 { // 有角色应用改权限
+		org.refreshRBACIfNeeded(op[`rbacType`].([]string), types)
 	}
 
 	return nil
 }
 
 // DelPermission in ldap
-func (org *Organization) DelPermission(id string, isUnit bool) error {
+func (org *Organization) DelPermission(id string) error {
 
-	rids, err := org.RoleIDsByPermissionID(id, isUnit)
+	rids, err := org.RoleIDsByPermissionID(id)
 	if err != nil {
 		return err
 	}
@@ -65,9 +74,12 @@ func (org *Organization) DelPermission(id string, isUnit bool) error {
 		return fmt.Errorf(`有角色/岗位引用当前权限 count %d`, len(rids))
 	}
 
-	dn := org.dn(id, permissionCategory(isUnit))
-	fmt.Print(dn)
-	dq := ldap.NewDelRequest(dn, nil)
+	op, err := org.PermissionByID(id)
+	if err != nil {
+		return err
+	}
+
+	dq := ldap.NewDelRequest(op[`dn`].(string), nil)
 
 	return org.l.Del(dq)
 }
@@ -123,7 +135,6 @@ func (org *Organization) PermissionByID(id string) (map[string]interface{}, erro
 	p := rs.Data[0]
 	dn := p[`dn`].(string)
 	p[`isUnit`] = strings.Contains(dn, `ou=unit`)
-	delete(p, `dn`)
 
 	return p, nil
 }
