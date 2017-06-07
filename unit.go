@@ -146,7 +146,7 @@ func (org *Organization) OrganizationUnitByMemberID(id string) ([]map[string]int
 	if err != nil {
 		return nil, err
 	}
-	return org.searchUnit(filter, false)
+	return org.searchUnit(filter, false) // 如果返回的父部门为空，则忽略次部门
 }
 
 func (org *Organization) filterConditionByMemberID(id string, isUnit bool) (string, error) {
