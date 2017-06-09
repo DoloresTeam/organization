@@ -15,6 +15,7 @@ const (
 	unitType         = 4
 	memberType       = 5
 	unit             = 6
+	audit            = 7
 )
 
 func (org *Organization) dn(id string, category int) string {
@@ -41,6 +42,8 @@ func (org *Organization) parentDN(category int) string {
 		baseDN = godn.DoloresType(org.subffix, false)
 	case unit:
 		baseDN = godn.Unit(org.subffix)
+	case audit:
+		baseDN = godn.Audit(org.subffix)
 	}
 
 	return baseDN

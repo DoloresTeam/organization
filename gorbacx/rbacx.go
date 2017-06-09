@@ -58,6 +58,17 @@ func (rbacx *RBACX) RoleByID(id string) (*Role, error) {
 	return nil, fmt.Errorf(`not found role id: %s`, id)
 }
 
+// RoleIDsByTypeID 有哪些Role包含此Type
+func (rbacx *RBACX) RoleIDsByTypeID(id string, isUnit bool) []string {
+	var ids []string
+	for _, r := range rbacx.roles {
+		if r.matchedTypes(isUnit).Contains(id) {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
 // PermissionByID ...
 func (rbacx *RBACX) PermissionByID(id string) (*Permission, error) {
 	rbacx.mutex.Lock()

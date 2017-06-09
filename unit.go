@@ -39,19 +39,69 @@ func (org *Organization) AddUnit(parentID string, info map[string][]string) (str
 		aq.Attribute(k, v)
 	}
 
-	return id, org.l.Add(aq)
+	err := org.l.Add(aq)
+	if err != nil {
+		return ``, err
+	}
+
+	unit, err := org.UnitByID(id)
+	if err != nil {
+		return ``, err
+	}
+
+	return id, org.logAddUnit(unit)
 }
 
 func (org *Organization) ModifyUnit(id string, info map[string][]string) error {
+	oUnit, err := org.UnitByID(id)
+	if err != nil {
+		return err
+	}
+	mq := ldap.NewModifyRequest(oUnit[`dn`].(string))
+	for k, v := range info {
+		mq.Replace(k, v)
+	}
+	err = org.l.Modify(mq)
+	if err != nil {
+		return err
+	}
+	nUnit, err := org.UnitByID(oUnit[`id`].(string))
+	if err != nil {
+		return err
+	}
+	return org.logModifyUnit(oUnit, nUnit)
+}
+
+// DelUnitByID ...
+func (org *Organization) DelUnit(id string) error {
+
+	ids, err := org.UnitSubIDs(id)
+	if err != nil {
+		return err
+	}
+
+	// 通过部门ID 找员工
+	mids, err := org.MemberIDsByDepartmentIDs(ids)
+	if err != nil {
+		return err
+	}
+	if len(mids) > 0 {
+		return fmt.Errorf(`此部门下包含员工，请先修改员工信息 count: %d`, len(mids))
+	}
+
 	unit, err := org.UnitByID(id)
 	if err != nil {
 		return err
 	}
-	mq := ldap.NewModifyRequest(unit[`dn`].(string))
-	for k, v := range info {
-		mq.Replace(k, v)
+
+	dq := ldap.NewDelRequest(unit[`dn`].(string), nil)
+
+	err = org.l.Del(dq)
+	if err != nil {
+		return err
 	}
-	return org.l.Modify(mq)
+
+	return org.logDelUnit(unit[`id`].(string), unit[`rbacType`].(string))
 }
 
 // UnitByID ...
@@ -105,33 +155,6 @@ func (org *Organization) UnitByTypeIDs(ids []string) ([]map[string]interface{}, 
 		return nil, err
 	}
 	return org.searchUnit(filter, true)
-}
-
-// DelUnitByID ...
-func (org *Organization) DelUnit(id string) error {
-
-	ids, err := org.UnitSubIDs(id)
-	if err != nil {
-		return err
-	}
-
-	// 通过部门ID 找员工
-	mids, err := org.MemberIDsByDepartmentIDs(ids)
-	if err != nil {
-		return err
-	}
-	if len(mids) > 0 {
-		return fmt.Errorf(`此部门下包含员工，请先修改员工信息 count: %d`, len(mids))
-	}
-
-	unit, err := org.UnitByID(id)
-	if err != nil {
-		return err
-	}
-
-	dq := ldap.NewDelRequest(unit[`dn`].(string), nil)
-
-	return org.l.Del(dq)
 }
 
 // AllUnit ...

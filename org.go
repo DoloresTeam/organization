@@ -86,8 +86,6 @@ func (org *Organization) RefreshRBAC() {
 
 		org.rbacx.Add(roles)
 
-		org.rbacx.PrettyPrint()
-
 		return nil
 	}()
 	if err != nil {

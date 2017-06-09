@@ -26,18 +26,38 @@ func (org *Organization) AddMember(info map[string][]string) (string, error) {
 		aq.Attribute(k, v)
 	}
 
-	return id, org.l.Add(aq)
+	err := org.l.Add(aq)
+	if err != nil {
+		return ``, err
+	}
+	nm, err := org.MemberByID(id, true, false)
+	if err != nil {
+		return ``, err
+	}
+
+	return id, org.logAddMember(nm)
 }
 
 // ModifyMember ...
 func (org *Organization) ModifyMember(id string, info map[string][]string) error {
 
+	oMember, err := org.MemberByID(id, true, false)
+	if err != nil {
+		return err
+	}
 	dn := org.dn(id, member)
-
 	mq := ldap.NewModifyRequest(dn)
 
 	for k, v := range info {
 		mq.Replace(k, v)
+	}
+
+	err = org.l.Modify(mq)
+	if err == nil {
+		go func() {
+			nMember, _ := org.MemberByID(id, true, false)
+			org.logModifyMember(oMember, nMember)
+		}()
 	}
 
 	return org.l.Modify(mq)
@@ -45,8 +65,20 @@ func (org *Organization) ModifyMember(id string, info map[string][]string) error
 
 // DelMember by id
 func (org *Organization) DelMember(id string) error {
+	m, err := org.MemberByID(id, true, false)
+	if err != nil {
+		return err
+	}
+	mids, err := org.MemberIDsByTypeIDs([]string{m[`rbacType`].(string)})
+	if err != nil {
+		return err
+	}
 	dq := ldap.NewDelRequest(fmt.Sprintf(`id=%s,%s`, id, org.parentDN(member)), nil)
-	return org.l.Del(dq)
+	err = org.l.Del(dq)
+	if err != nil {
+		return err
+	}
+	return org.logDelMember(id, mids)
 }
 
 // AuthMember ...
@@ -118,8 +150,7 @@ func (org *Organization) memberIDsByFilter(filter string) ([]string, error) {
 	return ids, nil
 }
 
-// MemberByID search member by id
-func (org *Organization) MemberByID(id string, containACL bool, containPwd bool) (map[string]interface{}, error) {
+func (org *Organization) MemberByIDs(ids []string, containACL bool, containPwd bool) ([]map[string]interface{}, error) {
 	sa := memberSignleAttrs[:]
 	ma := memberMutAttrs[:]
 	if containACL {
@@ -131,17 +162,29 @@ func (org *Organization) MemberByID(id string, containACL bool, containPwd bool)
 	}
 
 	dn := org.parentDN(member)
-	filter := fmt.Sprintf(`(id=%s)`, id)
+	filter, err := sqConvertIDsToFilter(ids)
+	if err != nil {
+		return nil, err
+	}
 	sq := &searchRequest{dn, filter, sa, ma, 0, nil}
 
 	r, e := org.search(sq)
 	if e != nil {
 		return nil, e
 	}
-	if len(r.Data) != 1 {
+	return r.Data, nil
+}
+
+// MemberByID search member by id
+func (org *Organization) MemberByID(id string, containACL bool, containPwd bool) (map[string]interface{}, error) {
+	members, err := org.MemberByIDs([]string{id}, containACL, containPwd)
+	if err != nil {
+		return nil, err
+	}
+	if len(members) != 1 {
 		return nil, errors.New(`not found`)
 	}
-	return r.Data[0], nil
+	return members[0], nil
 }
 
 // OrganizationMemberByMemberID ...

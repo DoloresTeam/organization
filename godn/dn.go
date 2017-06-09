@@ -32,3 +32,7 @@ func Member(subffix string) string {
 func Unit(subffix string) string {
 	return fmt.Sprintf(`o=1,ou=unit, %s`, subffix) // TODO 后续支持多公司
 }
+
+func Audit(subffix string) string {
+	return fmt.Sprintf(`ou=audit,%s`, subffix)
+}
