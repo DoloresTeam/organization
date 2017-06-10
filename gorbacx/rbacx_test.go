@@ -13,7 +13,7 @@ func TestMatch(t *testing.T) {
 	//define Permission
 	rbacx := rbacx()
 
-	ut := rbacx.MatchedTypes([]string{`1`}, true)
+	ut := rbacx.MatchedTypes([]string{`1`})
 
 	if len(ut) != 6 {
 		t.Fatal(ut)

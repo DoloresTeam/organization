@@ -2,23 +2,21 @@ package organization
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/deckarep/golang-set"
 	ldap "gopkg.in/ldap.v2"
 )
 
 const (
-	AuditActionAdd    = 0
-	AuditActionDel    = 1
-	AuditActionUpdate = 2
+	AuditActionAdd    = `add`
+	AuditActionDel    = `delete`
+	AuditActionUpdate = `update`
 )
 
 const (
-	AuditCategoryUnit   = 0
-	AuditCategoryMember = 1
+	AuditCategoryUnit   = `department`
+	AuditCategoryMember = `member`
 )
 
 type AuditContent []map[string]interface{}
@@ -28,7 +26,19 @@ func (org *Organization) refreshRBACIfNeeded(o, n []string) {
 	if set(o).Equal(set(n)) { // 没有变化
 		return
 	}
-	org.RefreshRBAC() // 更新RBAC缓存
+	err := org.RefreshRBAC() // 更新RBAC缓存
+	if err == nil {
+		func(dn string) {
+			sq := ldap.NewSearchRequest(dn, ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, true, `(objectClass=audit)`, nil, nil)
+			sr, _ := org.l.Search(sq)
+			for _, r := range sr.Entries {
+				org.l.Del(ldap.NewDelRequest(r.DN, nil))
+			}
+		}(org.parentDN(audit))
+		org.latestResetVersion = newTimeStampVersion()
+	} else {
+		fmt.Print(`err: %s`, err.Error())
+	}
 }
 
 // utils
@@ -48,8 +58,20 @@ func vset(ss []interface{}) []string {
 	return strs
 }
 
-func (org *Organization) relatedMIDs(tid string) ([]string, error) {
-	return org.MemberIDsByTypeIDs([]string{tid})
+func (org *Organization) relatedMIDs(tid, category string) ([]string, error) {
+	var mids []string
+	var err error
+	if category == AuditCategoryMember {
+		mids, err = org.MemberIDsByTypeIDs([]string{tid})
+	} else {
+		rids := org.rbacx.RoleIDsByTypeID(tid)
+		if len(rids) == 0 {
+			mids = make([]string, 0)
+		} else {
+			mids, err = org.MemberIDsByRoleIDs(rids)
+		}
+	}
+	return mids, err
 }
 
 func (org *Organization) logAddMember(member map[string]interface{}) error {
@@ -63,8 +85,8 @@ func (org *Organization) logModifyMember(oMember, nMember map[string]interface{}
 	nRole := set(nMember[`rbacRole`].([]string))
 	if !oRole.Equal(nRole) { // 用户的角色发生了变化
 		// 计算发生变化前后的`Type`变化y
-		oType := set(org.rbacx.MatchedTypes(oMember[`rbacRole`].([]string), false))
-		nType := set(org.rbacx.MatchedTypes(nMember[`rbacRole`].([]string), false))
+		oType := set(org.rbacx.MatchedTypes(oMember[`rbacRole`].([]string)))
+		nType := set(org.rbacx.MatchedTypes(nMember[`rbacRole`].([]string)))
 
 		addTypes := oType.Difference(nType)
 
@@ -116,7 +138,12 @@ func (org *Organization) logModifyMember(oMember, nMember map[string]interface{}
 		// DEL|del|member
 	}
 
-	return org.addAuditLog(AuditActionUpdate, AuditCategoryMember, []string{nMember[`id`].(string)}, AuditContent{nMember})
+	mids, err := org.relatedMIDs(nMember[`rbacType`].(string), AuditCategoryMember)
+	if err != nil {
+		return err
+	}
+
+	return org.addAuditLog(AuditActionUpdate, AuditCategoryMember, mids, AuditContent{nMember})
 }
 
 func (org *Organization) logDelMember(id string, relatedMIDs []string) error {
@@ -137,7 +164,7 @@ func (org *Organization) logModifyUnit(oUnit, nUnit map[string]interface{}) erro
 	if oType != nType {
 		org.typeChange(oType, nType, AuditCategoryUnit, nUnit)
 	}
-	mids, err := org.relatedMIDs(nType)
+	mids, err := org.relatedMIDs(nType, AuditCategoryUnit)
 	if err != nil {
 		return err
 	}
@@ -145,7 +172,7 @@ func (org *Organization) logModifyUnit(oUnit, nUnit map[string]interface{}) erro
 }
 
 func (org *Organization) logDelUnit(id string, tid string) error {
-	mids, err := org.relatedMIDs(tid)
+	mids, err := org.relatedMIDs(tid, AuditCategoryUnit)
 	if err != nil {
 		return err
 	}
@@ -156,20 +183,20 @@ func (org *Organization) logDelUnit(id string, tid string) error {
 	})
 }
 
-func (org *Organization) typeAdded(category int, entry map[string]interface{}) error {
-	mids, err := org.relatedMIDs(entry[`rbacType`].(string))
+func (org *Organization) typeAdded(category string, entry map[string]interface{}) error {
+	mids, err := org.relatedMIDs(entry[`rbacType`].(string), category)
 	if err != nil {
 		return err
 	}
 	return org.addAuditLog(AuditActionAdd, category, mids, AuditContent{entry})
 }
 
-func (org *Organization) typeChange(oType, nType string, category int, entry map[string]interface{}) error {
-	oMIDs, err := org.MemberIDsByTypeIDs([]string{oType})
+func (org *Organization) typeChange(oType, nType string, category string, entry map[string]interface{}) error {
+	oMIDs, err := org.relatedMIDs(oType, category)
 	if err != nil {
 		return err
 	}
-	nMIDs, err := org.MemberIDsByTypeIDs([]string{nType})
+	nMIDs, err := org.relatedMIDs(nType, category)
 	if err != nil {
 		return err
 	}
@@ -185,7 +212,7 @@ func (org *Organization) typeChange(oType, nType string, category int, entry map
 	return org.addAuditLog(AuditActionDel, category, delMIDs, AuditContent{entry})
 }
 
-func (org *Organization) addAuditLog(action, category int, mids []string, content []map[string]interface{}) error {
+func (org *Organization) addAuditLog(action, category string, mids []string, content []map[string]interface{}) error {
 
 	if len(mids) == 0 || len(content) == 0 {
 		return nil
@@ -196,36 +223,59 @@ func (org *Organization) addAuditLog(action, category int, mids []string, conten
 		return err
 	}
 
-	fmt.Println(mids)
-	fmt.Println(string(json))
-
-	aq := ldap.NewAddRequest(org.dn(generatorID(), audit))
+	id := generateNewID()
+	aq := ldap.NewAddRequest(org.dn(id, audit))
 
 	aq.Attribute(`objectClass`, []string{`audit`, `top`})
-	aq.Attribute(`action`, []string{strconv.Itoa(action)})
-	aq.Attribute(`category`, []string{strconv.Itoa(category)})
+	aq.Attribute(`action`, []string{action})
+	aq.Attribute(`category`, []string{category})
 	aq.Attribute(`mid`, mids)
 	aq.Attribute(`auditContent`, []string{string(json)})
 
-	return org.l.Add(aq)
+	err = org.l.Add(aq)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (org *Organization) fetchAuditLog(memberID, lastedLogID string) ([]map[string]interface{}, error) {
-	if len(memberID) == 0 || len(lastedLogID) == 0 {
-		return nil, errors.New(`memberID && lastedLogID must not be empty`)
-	}
-	filter := fmt.Sprintf(`(&(mid=%s)(id>=%s))`, memberID, lastedLogID)
+	filter := fmt.Sprintf(`(&(mid=%s)(createTimestamp>=%s))`, memberID, lastedLogID)
 	sq := ldap.NewSearchRequest(org.parentDN(audit),
 		ldap.ScopeSingleLevel, ldap.DerefAlways, 0, 0, false, filter,
-		[]string{`id`, `action`, `auditContent`, `category`}, nil)
+		[]string{`createTimestamp`, `action`, `auditContent`, `category`}, nil)
 	sr, err := org.l.Search(sq)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, entry := range sr.Entries {
-		entry.PrettyPrint(2)
+	var result []map[string]interface{}
+	for _, e := range sr.Entries {
+		var content []map[string]interface{}
+		err := json.Unmarshal(e.GetRawAttributeValue(`auditContent`), &content)
+		if err != nil {
+			continue
+		}
+		log := make(map[string]interface{}, 0)
+		log[`content`] = content
+		// log[`timestamp`] = e.GetAttributeValue(`createTimestamp`)
+		log[`action`] = e.GetAttributeValue(`action`)
+		log[`category`] = e.GetAttributeValue(`category`)
+		result = append(result, log)
 	}
 
-	return nil, nil
+	// TODO 这里需要对 logs 根据 timestamp 排序
+	return result, nil
+}
+
+func (org *Organization) IsValidVersion(version string) bool {
+	return org.latestResetVersion == `` || version > org.latestResetVersion
+}
+
+func (org *Organization) GenerateChangeLogFromVersion(version string, mid string) (string, []map[string]interface{}, error) {
+	if org.IsValidVersion(version) {
+		logs, err := org.fetchAuditLog(mid, version)
+		return newTimeStampVersion(), logs, err
+	} else {
+		return ``, nil, fmt.Errorf(`version invalid. latest reset version %s`, org.latestResetVersion)
+	}
 }

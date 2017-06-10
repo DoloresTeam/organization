@@ -63,6 +63,6 @@ func permissionCategory(isUnit bool) int {
 	return memberPermission
 }
 
-func generatorID() string {
+func generateNewID() string {
 	return xid.New().String()
 }

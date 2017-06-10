@@ -59,11 +59,11 @@ func (rbacx *RBACX) RoleByID(id string) (*Role, error) {
 }
 
 // RoleIDsByTypeID 有哪些Role包含此Type
-func (rbacx *RBACX) RoleIDsByTypeID(id string, isUnit bool) []string {
+func (rbacx *RBACX) RoleIDsByTypeID(id string) []string {
 	var ids []string
 	for _, r := range rbacx.roles {
-		if r.matchedTypes(isUnit).Contains(id) {
-			ids = append(ids, id)
+		if r.matchedTypes().Contains(id) {
+			ids = append(ids, r.ID)
 		}
 	}
 	return ids
@@ -92,7 +92,7 @@ func (rbacx *RBACX) PermissionByID(id string) (*Permission, error) {
 }
 
 // MatchedTypes ...
-func (rbacx *RBACX) MatchedTypes(roleIDs []string, isUnit bool) []string {
+func (rbacx *RBACX) MatchedTypes(roleIDs []string) []string {
 	rbacx.mutex.Lock()
 	rbacx.mutex.Unlock()
 
@@ -100,7 +100,7 @@ func (rbacx *RBACX) MatchedTypes(roleIDs []string, isUnit bool) []string {
 
 	for _, id := range roleIDs {
 		if role, ok := rbacx.roles[id]; ok {
-			set = set.Union(role.matchedTypes(isUnit))
+			set = set.Union(role.matchedTypes())
 		} else {
 			fmt.Printf(`[Warning-rbacx] cant't find role: %s, please add this role`, id)
 		}

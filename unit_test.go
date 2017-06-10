@@ -2,54 +2,29 @@ package organization
 
 import "testing"
 
-func TestUnitByID(t *testing.T) {
+func TestUnit(t *testing.T) {
+	// if testing.Short() {
+	// 	t.SkipNow()
+	// }
 
-	if testing.Short() {
-		t.SkipNow()
-	}
-
-	_, e := org.UnitByIDs([]string{`b4ds0t5hfpcr4h3thtd0`})
-	if e != nil {
-		t.Fatal(e)
-	}
-
-	ids, err := org.UnitSubIDs(`b4g14m0m20mgfdkk5bk0`)
+	id, err := org.AddUnit(``, map[string][]string{
+		`ou`:          []string{`Test Add Unit`},
+		`description`: []string{`This is description`},
+		`rbacType`:    []string{`b4oejsdhfpcjdr8fq6p0`},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Log(ids)
-}
-
-func TestOrganizationUnitByMemberID(t *testing.T) {
-
-	if testing.Short() {
-		t.SkipNow()
+	err = org.ModifyUnit(id, map[string][]string{
+		`rbacType`: []string{`b4rts55hfpclmh1obi2g`},
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	r, e := org.OrganizationUnitByMemberID(`b4ju9dthfpcjdopdqcl0`)
-	if e != nil {
-		t.Fatal(e)
-	}
-
-	for _, v := range r {
-		t.Log(v[`id`])
+	err = org.DelUnit(id)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
-
-// func TestAddUnit(t *testing.T) {
-//
-// 	if testing.Short() {
-// 		t.SkipNow()
-// 	}
-//
-// 	_, err := org.AddUnit(`b4jv4llhfpcjtv6o07og`, map[string][]string{
-// 		`ou`:          []string{`iOS-Tester-sub`},
-// 		`description`: []string{`iOS-Tester-sub is a test ou`},
-// 		`rbacType`:    []string{`b4drradhfpcqnna2pvh0`},
-// 	})
-//
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// }

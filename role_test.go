@@ -2,31 +2,25 @@ package organization
 
 import "testing"
 
-func TestFilterRole(t *testing.T) {
-
+func TestRole(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
 
-	rs, err := org.AllRoles()
+	id, err := org.AddRole(`Test`, `Test and Role`,
+		[]string{`b4ofic5hfpcjdr8fq6qg`, `b4rrr85hfpcj0qpeire0`},
+		[]string{`b4ohonthfpckql08mas0`, `b4rtt2lhfpclmh1obi30`})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Log(`all roles`)
-	for _, r := range rs {
-		t.Log(r)
-	}
-
-	t.Log(`filter role ` + `b47kco86h3053ecopjd0`)
-	rss, err := org.RoleByIDs([]string{`b47kco86h3053ecopjd0`})
+	err = org.ModifyRole(id, ``, ``, []string{`b4ofic5hfpcjdr8fq6qg`}, []string{`b4ohonthfpckql08mas0`})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(rss)
-}
 
-func TestRBAC(t *testing.T) {
-
-	org.rbacx.PrettyPrint()
+	err = org.DelRole(id)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

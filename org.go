@@ -3,18 +3,19 @@ package organization
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/DoloresTeam/organization/gorbacx"
 
-	log "github.com/sirupsen/logrus"
 	ldap "gopkg.in/ldap.v2"
 )
 
 // Organization ldap operation handler
 type Organization struct {
-	l       *ldap.Conn
-	rbacx   *gorbacx.RBACX
-	subffix string
+	l                  *ldap.Conn
+	rbacx              *gorbacx.RBACX
+	subffix            string
+	latestResetVersion string
 }
 
 // NewOrganization ...
@@ -25,11 +26,9 @@ func NewOrganization(subffix string, ldapBindConn *ldap.Conn) (*Organization, er
 	}
 
 	// TODO 验证ldap 的目录结构
-	org := &Organization{ldapBindConn, gorbacx.New(), subffix}
+	org := &Organization{ldapBindConn, gorbacx.New(), subffix, ``}
 
-	org.RefreshRBAC()
-
-	return org, nil
+	return org, org.RefreshRBAC()
 }
 
 // NewOrganizationWithSimpleBind ...
@@ -48,7 +47,7 @@ func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port i
 	return NewOrganization(subffix, l)
 }
 
-func (org *Organization) RefreshRBAC() {
+func (org *Organization) RefreshRBAC() error {
 
 	err := func() error {
 		org.rbacx.Clear()
@@ -88,7 +87,37 @@ func (org *Organization) RefreshRBAC() {
 
 		return nil
 	}()
+	return err
+}
+
+func (org *Organization) OrganizationView(id string) ([]map[string]interface{}, []map[string]interface{}, string, error) { // departments, members, version, error
+	// 通过id 拿到所有的 角色
+	roleIDs, err := org.RoleIDsByMemberID(id)
 	if err != nil {
-		log.WithField(`file:method`, `org.og:RefreshRBAC`).Error(err)
+		return nil, nil, ``, err
 	}
+	// 类型
+	types := org.rbacx.MatchedTypes(roleIDs) // 这个Type包含了当前角色下所有的部门和员工Type， 所有的Type ID 都是全局唯一的
+
+	filter, err := sqConvertArraysToFilter(`rbacType`, types)
+	if err != nil {
+		return nil, nil, ``, err
+	}
+
+	msq := &searchRequest{org.parentDN(member), filter, memberSignleAttrs[:], memberMutAttrs[:], 0, nil}
+	msr, err := org.search(msq)
+	if err != nil {
+		return nil, nil, ``, err
+	}
+
+	departments, err := org.searchUnit(filter, false)
+	if err != nil {
+		return nil, nil, ``, err
+	}
+
+	return departments, msr.Data, newTimeStampVersion(), err
+}
+
+func newTimeStampVersion() string {
+	return time.Now().UTC().Format(`20060102150405Z`)
 }

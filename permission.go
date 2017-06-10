@@ -16,7 +16,7 @@ func (org *Organization) AddPermission(name, description string, types []string,
 		return ``, errors.New(`invalid types`)
 	}
 
-	id := generatorID()
+	id := generateNewID()
 	dn := org.dn(id, permissionCategory(isUnit))
 	aq := ldap.NewAddRequest(dn)
 

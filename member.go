@@ -16,7 +16,7 @@ var memberMutACLAttrs = [...]string{`rbacRole`}
 // AddMember to ldap server
 func (org *Organization) AddMember(info map[string][]string) (string, error) {
 
-	id := generatorID()
+	id := generateNewID()
 	aq := ldap.NewAddRequest(org.dn(id, member))
 
 	aq.Attribute(`objectClass`, []string{`member`, `top`})
@@ -60,7 +60,7 @@ func (org *Organization) ModifyMember(id string, info map[string][]string) error
 		}()
 	}
 
-	return org.l.Modify(mq)
+	return err
 }
 
 // DelMember by id
@@ -185,22 +185,4 @@ func (org *Organization) MemberByID(id string, containACL bool, containPwd bool)
 		return nil, errors.New(`not found`)
 	}
 	return members[0], nil
-}
-
-// OrganizationMemberByMemberID ...
-func (org *Organization) OrganizationMemberByMemberID(id string) ([]map[string]interface{}, error) {
-	dn := org.parentDN(member)
-	filter, err := org.filterConditionByMemberID(id, false)
-	if err != nil {
-		return nil, err
-	}
-
-	sq := &searchRequest{dn, filter, memberSignleAttrs[:], memberMutAttrs[:], 0, nil}
-
-	r, e := org.search(sq)
-	if e != nil {
-		return nil, e
-	}
-
-	return r.Data, nil
 }

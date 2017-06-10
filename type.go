@@ -11,7 +11,7 @@ import (
 // AddType desgined to add a new dolresType
 func (org *Organization) AddType(name, description string, isUnit bool) (string, error) {
 
-	id := generatorID()
+	id := generateNewID()
 	dn := org.dn(id, typeCategory(isUnit))
 	aq := ldap.NewAddRequest(dn)
 

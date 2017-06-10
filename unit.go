@@ -10,7 +10,7 @@ import (
 // AddUnit to ldap
 func (org *Organization) AddUnit(parentID string, info map[string][]string) (string, error) {
 
-	id := generatorID()
+	id := generateNewID()
 
 	var dn string
 	if len(parentID) == 0 {
@@ -160,32 +160,4 @@ func (org *Organization) UnitByTypeIDs(ids []string) ([]map[string]interface{}, 
 // AllUnit ...
 func (org *Organization) AllUnit() ([]map[string]interface{}, error) {
 	return org.searchUnit(``, true)
-}
-
-// OrganizationUnitByMemberID ...
-func (org *Organization) OrganizationUnitByMemberID(id string) ([]map[string]interface{}, error) {
-
-	filter, err := org.filterConditionByMemberID(id, true)
-	if err != nil {
-		return nil, err
-	}
-	return org.searchUnit(filter, false) // 如果返回的父部门为空，则忽略次部门
-}
-
-func (org *Organization) filterConditionByMemberID(id string, isUnit bool) (string, error) {
-
-	// 通过id 拿到所有的 角色
-	roleIDs, err := org.RoleIDsByMemberID(id)
-	if err != nil {
-		return ``, err
-	}
-
-	types := org.rbacx.MatchedTypes(roleIDs, isUnit)
-
-	filter, err := sqConvertArraysToFilter(`rbacType`, types)
-	if err != nil {
-		return ``, err
-	}
-
-	return filter, nil
 }

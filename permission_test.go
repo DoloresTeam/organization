@@ -1,27 +1,10 @@
 package organization
 
 import (
-	"errors"
 	"testing"
 )
 
-func TestSearchPermission(t *testing.T) {
-
-	if testing.Short() {
-		t.SkipNow()
-	}
-
-	ps, _ := org.PermissionByType(`b4drqelhfpcqn7f7du50`, true)
-	if len(ps) == 0 {
-		t.Fatal(errors.New(`no permission`))
-	}
-}
-
-func TestAddPermission(t *testing.T) {
-
-	if testing.Short() {
-		t.SkipNow()
-	}
+func TestPermission(t *testing.T) {
 
 	id, err := org.AddPermission(`Test`, `This is Test Permission`, []string{`b4oejsdhfpcjdr8fq6p0`}, true)
 	if err != nil {
@@ -29,7 +12,7 @@ func TestAddPermission(t *testing.T) {
 	}
 
 	// 测试 修改
-	err = org.ModifyPermission(id, ``, ``, []string{`b4oejsdhfpcjdr8fq6p0`})
+	err = org.ModifyPermission(id, ``, ``, []string{`b4oejsdhfpcjdr8fq6p0`, `b4rts55hfpclmh1obi2g`})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +35,6 @@ func TestFetchAllPermission(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(`all permissions`)
 	for _, p := range ps.Data {
 		t.Log(p)
 	}

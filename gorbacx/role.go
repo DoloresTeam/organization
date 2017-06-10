@@ -67,16 +67,13 @@ func (r *Role) Replace(ps []*Permission, isUnit bool) {
 	r.Add(ps, isUnit)
 }
 
-func (r *Role) matchedTypes(isUnit bool) mapset.Set {
+func (r *Role) matchedTypes() mapset.Set {
 	set := mapset.NewSet()
-	if isUnit {
-		for _, v := range r.unitPermissions {
-			set = set.Union(v.types)
-		}
-	} else {
-		for _, v := range r.memberPermissions {
-			set = set.Union(v.types)
-		}
+	for _, v := range r.unitPermissions {
+		set = set.Union(v.types)
+	}
+	for _, v := range r.memberPermissions {
+		set = set.Union(v.types)
 	}
 	return set
 }

@@ -20,7 +20,7 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) (s
 		return ``, err
 	}
 
-	id := generatorID()
+	id := generateNewID()
 	dn := org.dn(id, role)
 	aq := ldap.NewAddRequest(dn)
 
