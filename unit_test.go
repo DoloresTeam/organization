@@ -3,9 +3,9 @@ package organization
 import "testing"
 
 func TestUnit(t *testing.T) {
-	// if testing.Short() {
-	// 	t.SkipNow()
-	// }
+	if testing.Short() {
+		t.SkipNow()
+	}
 
 	id, err := org.AddUnit(``, map[string][]string{
 		`ou`:          []string{`Test Add Unit`},

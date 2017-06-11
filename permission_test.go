@@ -5,6 +5,9 @@ import (
 )
 
 func TestPermission(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
 
 	id, err := org.AddPermission(`Test`, `This is Test Permission`, []string{`b4oejsdhfpcjdr8fq6p0`}, true)
 	if err != nil {
