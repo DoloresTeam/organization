@@ -218,6 +218,11 @@ func (org *Organization) addAuditLog(action, category string, mids []string, con
 		return nil
 	}
 
+	for _, c := range content {
+		delete(c, `rbacType`)
+		delete(c, `rbacRole`)
+	}
+
 	json, err := json.Marshal(content)
 	if err != nil {
 		return err
