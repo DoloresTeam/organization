@@ -262,7 +262,7 @@ func (org *Organization) fetchAuditLog(memberID, lastedLogID string) ([]map[stri
 		}
 		log := make(map[string]interface{}, 0)
 		log[`content`] = content
-		// log[`timestamp`] = e.GetAttributeValue(`createTimestamp`)
+		log[`createTimestamp`] = e.GetAttributeValue(`createTimestamp`)
 		log[`action`] = e.GetAttributeValue(`action`)
 		log[`category`] = e.GetAttributeValue(`category`)
 		result = append(result, log)
