@@ -13,7 +13,10 @@ func TestNewOrganizationWithSimpleBind(t *testing.T) {
 func BenchmarkOriganizationView(b *testing.B) {
 	b.RunParallel(func(arg1 *testing.PB) {
 		for arg1.Next() {
-			org.OrganizationView(`b4r6e05hfpckh33hnsq0`)
+			_, _, _, err := org.OrganizationView(`b4r6e05hfpckh33hnsq0`)
+			if err != nil {
+				b.Fatal(err)
+			}
 		}
 	})
 }
