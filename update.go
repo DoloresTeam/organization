@@ -269,7 +269,6 @@ func (org *Organization) fetchAuditLog(memberID, lastedLogID string) ([]map[stri
 		result = append(result, log)
 	}
 
-	// TODO 这里需要对 logs 根据 timestamp 排序
 	return result, nil
 }
 
