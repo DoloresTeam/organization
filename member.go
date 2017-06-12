@@ -104,7 +104,7 @@ func (org *Organization) Members(pageSize uint32, cookie []byte) (*SearchResult,
 	sq := &searchRequest{
 		org.parentDN(member), `(objectClass=member)`,
 		append(memberSignleAttrs[:], memberSignleACLAttrs[:]...),
-		append(memberMutAttrs[:], memberMutACLAttrs[:]...), 0, nil}
+		append(memberMutAttrs[:], memberMutACLAttrs[:]...), pageSize, cookie}
 
 	return org.search(sq)
 }
