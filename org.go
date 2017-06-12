@@ -12,27 +12,28 @@ import (
 
 // Organization ldap operation handler
 type Organization struct {
-	l                  *ldap.Conn
-	rbacx              *gorbacx.RBACX
-	subffix            string
-	latestResetVersion string
+	l                     *ldap.Conn
+	rbacx                 *gorbacx.RBACX
+	subffix               string
+	latestResetVersion    string
+	organizationViewEvent chan []string
 }
 
 // NewOrganization ...
-func NewOrganization(subffix string, ldapBindConn *ldap.Conn) (*Organization, error) {
+func NewOrganization(subffix string, ldapBindConn *ldap.Conn, orgViewChangeEvent chan []string) (*Organization, error) {
 
 	if len(subffix) == 0 || ldapBindConn == nil {
 		return nil, errors.New(`subfix and ldapBindConn must not be nil`)
 	}
 
 	// TODO 验证ldap 的目录结构
-	org := &Organization{ldapBindConn, gorbacx.New(), subffix, ``}
+	org := &Organization{ldapBindConn, gorbacx.New(), subffix, ``, orgViewChangeEvent}
 
 	return org, org.RefreshRBAC()
 }
 
 // NewOrganizationWithSimpleBind ...
-func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port int) (*Organization, error) {
+func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port int, orgViewChangeEvent chan []string) (*Organization, error) {
 
 	l, err := ldap.Dial(`tcp`, fmt.Sprintf(`%s:%d`, host, port))
 	if err != nil {
@@ -44,7 +45,7 @@ func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port i
 		return nil, err
 	}
 
-	return NewOrganization(subffix, l)
+	return NewOrganization(subffix, l, orgViewChangeEvent)
 }
 
 func (org *Organization) RefreshRBAC() error {

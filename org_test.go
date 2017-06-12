@@ -2,7 +2,8 @@ package organization
 
 import "testing"
 
-var org, _ = NewOrganizationWithSimpleBind(`dc=dolores,dc=store`, `dolores.store`, `cn=admin,dc=dolores,dc=store`, `dolores`, 389)
+var c = make(chan []string, 0)
+var org, _ = NewOrganizationWithSimpleBind(`dc=dolores,dc=store`, `dolores.store`, `cn=admin,dc=dolores,dc=store`, `dolores`, 389, c)
 
 func TestNewOrganizationWithSimpleBind(t *testing.T) {
 	if org == nil {

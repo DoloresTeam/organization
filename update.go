@@ -1,5 +1,8 @@
 package organization
 
+// update 增量更新的逻辑说明
+// 在权限变更， 或者角色变更的时候会引起每个用户的通讯录视图发生变化
+// 增加角色，或者删除角色 不会更新版本号
 import (
 	"encoding/json"
 	"fmt"
@@ -242,6 +245,11 @@ func (org *Organization) addAuditLog(action, category string, mids []string, con
 	if err != nil {
 		return err
 	}
+
+	go func() {
+		org.organizationViewEvent <- mids
+	}()
+
 	return nil
 }
 
