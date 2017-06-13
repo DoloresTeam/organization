@@ -5,6 +5,7 @@ package organization
 // 增加角色，或者删除角色 不会更新版本号
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/deckarep/golang-set"
@@ -61,20 +62,12 @@ func vset(ss []interface{}) []string {
 	return strs
 }
 
-func (org *Organization) relatedMIDs(tid, category string) ([]string, error) {
-	var mids []string
-	var err error
-	if category == AuditCategoryMember {
-		mids, err = org.MemberIDsByTypeIDs([]string{tid})
-	} else {
-		rids := org.rbacx.RoleIDsByTypeID(tid)
-		if len(rids) == 0 {
-			mids = make([]string, 0)
-		} else {
-			mids, err = org.MemberIDsByRoleIDs(rids)
-		}
+func (org *Organization) relatedMIDs(tid string) ([]string, error) {
+	rids := org.rbacx.RoleIDsByTypeID(tid)
+	if len(rids) == 0 {
+		return nil, errors.New(`no role refrence this type`)
 	}
-	return mids, err
+	return org.MemberIDsByRoleIDs(rids)
 }
 
 func (org *Organization) logAddMember(member map[string]interface{}) error {
@@ -141,7 +134,7 @@ func (org *Organization) logModifyMember(oMember, nMember map[string]interface{}
 		// DEL|del|member
 	}
 
-	mids, err := org.relatedMIDs(nMember[`rbacType`].(string), AuditCategoryMember)
+	mids, err := org.relatedMIDs(nMember[`rbacType`].(string))
 	if err != nil {
 		return err
 	}
@@ -167,7 +160,7 @@ func (org *Organization) logModifyUnit(oUnit, nUnit map[string]interface{}) erro
 	if oType != nType {
 		org.typeChange(oType, nType, AuditCategoryUnit, nUnit)
 	}
-	mids, err := org.relatedMIDs(nType, AuditCategoryUnit)
+	mids, err := org.relatedMIDs(nType)
 	if err != nil {
 		return err
 	}
@@ -175,7 +168,7 @@ func (org *Organization) logModifyUnit(oUnit, nUnit map[string]interface{}) erro
 }
 
 func (org *Organization) logDelUnit(id string, tid string) error {
-	mids, err := org.relatedMIDs(tid, AuditCategoryUnit)
+	mids, err := org.relatedMIDs(tid)
 	if err != nil {
 		return err
 	}
@@ -187,7 +180,7 @@ func (org *Organization) logDelUnit(id string, tid string) error {
 }
 
 func (org *Organization) typeAdded(category string, entry map[string]interface{}) error {
-	mids, err := org.relatedMIDs(entry[`rbacType`].(string), category)
+	mids, err := org.relatedMIDs(entry[`rbacType`].(string))
 	if err != nil {
 		return err
 	}
@@ -195,11 +188,11 @@ func (org *Organization) typeAdded(category string, entry map[string]interface{}
 }
 
 func (org *Organization) typeChange(oType, nType string, category string, entry map[string]interface{}) error {
-	oMIDs, err := org.relatedMIDs(oType, category)
+	oMIDs, err := org.relatedMIDs(oType)
 	if err != nil {
 		return err
 	}
-	nMIDs, err := org.relatedMIDs(nType, category)
+	nMIDs, err := org.relatedMIDs(nType)
 	if err != nil {
 		return err
 	}
