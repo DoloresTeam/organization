@@ -115,7 +115,7 @@ func (org *Organization) OrganizationView(id string) ([]map[string]interface{}, 
 	}
 
 	f := fmt.Sprintf(`(&(%s)(%s))`, filter, uFilter) // 添加部门过滤条件 确定有访问此部门的全新啊
-	msq := &searchRequest{org.parentDN(member), f, memberSignleAttrs[:], memberMutAttrs[:], 0, nil}
+	msq := &searchRequest{org.parentDN(member), f, MemberSignleAttrs[:], MemberMutAttrs[:], 0, nil}
 	msr, err := org.search(msq)
 	if err != nil {
 		return nil, nil, ``, err

@@ -7,11 +7,11 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-var memberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`, `title`}
-var memberSignleACLAttrs = [...]string{`rbacType`}
+var MemberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`, `title`}
+var MemberSignleACLAttrs = [...]string{`rbacType`}
 
-var memberMutAttrs = [...]string{`email`, `unitID`}
-var memberMutACLAttrs = [...]string{`rbacRole`}
+var MemberMutAttrs = [...]string{`email`, `unitID`}
+var MemberMutACLAttrs = [...]string{`rbacRole`}
 
 // AddMember to ldap server
 func (org *Organization) AddMember(info map[string][]string) (string, error) {
@@ -103,8 +103,8 @@ func (org *Organization) Members(pageSize uint32, cookie []byte) (*SearchResult,
 
 	sq := &searchRequest{
 		org.parentDN(member), `(objectClass=member)`,
-		append(memberSignleAttrs[:], memberSignleACLAttrs[:]...),
-		append(memberMutAttrs[:], memberMutACLAttrs[:]...), pageSize, cookie}
+		append(MemberSignleAttrs[:], MemberSignleACLAttrs[:]...),
+		append(MemberMutAttrs[:], MemberMutACLAttrs[:]...), pageSize, cookie}
 
 	return org.search(sq)
 }
@@ -151,11 +151,11 @@ func (org *Organization) memberIDsByFilter(filter string) ([]string, error) {
 }
 
 func (org *Organization) MemberByIDs(ids []string, containACL bool, containPwd bool) ([]map[string]interface{}, error) {
-	sa := memberSignleAttrs[:]
-	ma := memberMutAttrs[:]
+	sa := MemberSignleAttrs[:]
+	ma := MemberMutAttrs[:]
 	if containACL {
-		sa = append(sa, memberSignleACLAttrs[:]...)
-		ma = append(ma, memberMutACLAttrs[:]...)
+		sa = append(sa, MemberSignleACLAttrs[:]...)
+		ma = append(ma, MemberMutACLAttrs[:]...)
 	}
 	if containPwd {
 		sa = append(sa, `thirdPassword`)
