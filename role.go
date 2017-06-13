@@ -69,13 +69,14 @@ func (org *Organization) DelRole(id string) error {
 
 // ModifyRole in ldap server, automatically update org's rbacx
 func (org *Organization) ModifyRole(id, name, description string, ups, pps []string) error {
-
-	p, err := org.PermissionByIDs(append(ups, pps...))
-	if err != nil {
-		return err
-	}
-	if len(p.Data) != len(ups)+len(pps) {
-		return errors.New(`permission ids is invalid`)
+	if len(ups) > 0 || len(pps) > 0 { // permission id 有效性判断
+		p, err := org.PermissionByIDs(append(ups, pps...))
+		if err != nil {
+			return err
+		}
+		if len(p.Data) != len(ups)+len(pps) {
+			return errors.New(`permission ids is invalid`)
+		}
 	}
 
 	r, err := org.RoleByID(id)
@@ -161,7 +162,7 @@ func (org *Organization) RoleIDsByMemberID(id string) ([]string, error) {
 		return nil, err
 	}
 	if len(sr.Entries) != 1 {
-		return nil, errors.New(`can't find this member`)
+		return nil, fmt.Errorf(`[%s] member doesn't exit`, id)
 	}
 	return sr.Entries[0].GetAttributeValues(`rbacRole`), nil
 }

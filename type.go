@@ -50,7 +50,7 @@ func (org *Organization) DelType(id string, isUnit bool) error {
 	}
 
 	if isUnit {
-		us, e := org.UnitByTypeIDs([]string{id})
+		us, e := org.UnitIDsByTypeIDs([]string{id})
 		if e != nil {
 			return e
 		}

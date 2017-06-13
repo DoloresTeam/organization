@@ -48,8 +48,8 @@ func (org *Organization) AddUnit(parentID string, info map[string][]string) (str
 	if err != nil {
 		return ``, err
 	}
-
-	return id, org.logAddUnit(unit)
+	go org.logAddUnit(unit)
+	return id, nil
 }
 
 func (org *Organization) ModifyUnit(id string, info map[string][]string) error {
@@ -100,8 +100,8 @@ func (org *Organization) DelUnit(id string) error {
 	if err != nil {
 		return err
 	}
-
-	return org.logDelUnit(unit[`id`].(string), unit[`rbacType`].(string))
+	go org.logDelUnit(unit[`id`].(string), unit[`rbacType`].(string))
+	return nil
 }
 
 // UnitByID ...
@@ -149,12 +149,22 @@ func (org *Organization) UnitSubIDs(id string) ([]string, error) {
 	return ids, nil
 }
 
-func (org *Organization) UnitByTypeIDs(ids []string) ([]map[string]interface{}, error) {
+func (org *Organization) UnitIDsByTypeIDs(ids []string) ([]string, error) {
 	filter, err := sqConvertArraysToFilter(`rbacType`, ids)
 	if err != nil {
 		return nil, err
 	}
-	return org.searchUnit(filter, true)
+	sq := ldap.NewSearchRequest(org.parentDN(unit), ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false, filter, []string{`id`}, nil)
+	sr, err := org.l.Search(sq)
+	if err != nil {
+		return nil, err
+	}
+	unitIDs := make([]string, 0)
+	for _, e := range sr.Entries {
+		unitIDs = append(unitIDs, e.GetAttributeValue(`id`))
+	}
+
+	return unitIDs, nil
 }
 
 // AllUnit ...

@@ -105,7 +105,17 @@ func (org *Organization) OrganizationView(id string) ([]map[string]interface{}, 
 		return nil, nil, ``, err
 	}
 
-	msq := &searchRequest{org.parentDN(member), filter, memberSignleAttrs[:], memberMutAttrs[:], 0, nil}
+	unitIDs, err := org.UnitIDsByTypeIDs(types)
+	if err != nil {
+		return nil, nil, ``, err
+	}
+	uFilter, err := sqConvertArraysToFilter(`unitID`, unitIDs)
+	if err != nil {
+		return nil, nil, ``, err
+	}
+
+	f := fmt.Sprintf(`(&(%s)(%s))`, filter, uFilter) // 添加部门过滤条件 确定有访问此部门的全新啊
+	msq := &searchRequest{org.parentDN(member), f, memberSignleAttrs[:], memberMutAttrs[:], 0, nil}
 	msr, err := org.search(msq)
 	if err != nil {
 		return nil, nil, ``, err

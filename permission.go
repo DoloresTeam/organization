@@ -128,8 +128,11 @@ func (org *Organization) PermissionByID(id string) (map[string]interface{}, erro
 	if e != nil {
 		return nil, e
 	}
-	if len(rs.Data) != 1 {
-		return nil, errors.New(`found many results`)
+	if len(rs.Data) == 0 {
+		return nil, fmt.Errorf(`[%s] permission doesn't exist`, id)
+	}
+	if len(rs.Data) > 1 {
+		return nil, fmt.Errorf(`[%s] found many permission`, id)
 	}
 
 	p := rs.Data[0]
