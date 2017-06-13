@@ -9,6 +9,10 @@ func TestNewOrganizationWithSimpleBind(t *testing.T) {
 	if org == nil {
 		t.Fatal(`org initial failed`)
 	}
+
+	d, m, _, _ := org.OrganizationView(`b4vaqu11scghuujqilgg`)
+	t.Log(d)
+	t.Log(m)
 }
 
 func BenchmarkOriganizationView(b *testing.B) {

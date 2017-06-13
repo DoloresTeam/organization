@@ -129,17 +129,14 @@ func (org *Organization) searchRole(filter string, pageSize uint32, cookie []byt
 }
 
 func (org *Organization) searchUnit(filter string, containACL bool) ([]map[string]interface{}, error) {
-	attrs := []string{`id`, `ou`, `description`}
+	attrs := UnitAttributes[0:]
 	if containACL {
 		attrs = append(attrs, `rbacType`)
 	}
 
 	if len(filter) == 0 {
 		filter = `(objectClass=organizationalUnit)`
-	} else {
-		filter = fmt.Sprintf(`(&(objectClass=organizationalUnit)%s)`, filter)
 	}
-
 	sq := ldap.NewSearchRequest(org.parentDN(unit),
 		ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false,
 		filter, attrs, nil)
@@ -148,15 +145,16 @@ func (org *Organization) searchUnit(filter string, containACL bool) ([]map[strin
 	if e != nil {
 		return nil, e
 	}
-
 	units := make([]map[string]interface{}, 0)
 	for _, e := range sr.Entries {
 		unit := make(map[string]interface{}, 0)
-		unit[`id`] = e.GetAttributeValue(`id`)
-		unit[`cn`] = e.GetAttributeValue(`ou`)
-		unit[`description`] = e.GetAttributeValue(`description`)
+		for _, attr := range attrs {
+			unit[attr] = e.GetAttributeValue(attr)
+		}
+		// unit[`id`] = e.GetAttributeValue(`id`)
+		// unit[`cn`] = e.GetAttributeValue(`ou`)
+		// unit[`description`] = e.GetAttributeValue(`description`)
 		if containACL {
-			unit[`rbacType`] = e.GetAttributeValue(`rbacType`)
 			unit[`dn`] = e.DN
 		}
 		dn, _ := ldap.ParseDN(e.DN)
@@ -177,6 +175,9 @@ func sqConvertIDsToFilter(ids []string) (string, error) {
 func sqConvertArraysToFilter(label string, datas []string) (string, error) {
 	if len(datas) == 0 {
 		return ``, fmt.Errorf(`At least one %s`, label)
+	}
+	if len(datas) == 1 {
+		return fmt.Sprintf(`(%s=%s)`, label, datas[0]), nil
 	}
 
 	filter := `(|`

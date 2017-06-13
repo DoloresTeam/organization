@@ -7,7 +7,7 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-var MemberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`, `title`}
+var MemberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`, `title`, `priority`}
 var MemberSignleACLAttrs = [...]string{`rbacType`}
 
 var MemberMutAttrs = [...]string{`email`, `unitID`}
