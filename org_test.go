@@ -1,6 +1,9 @@
 package organization
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 var c = make(chan []string, 0)
 var org, _ = NewOrganizationWithSimpleBind(`dc=dolores,dc=store`, `dolores.store`, `cn=admin,dc=dolores,dc=store`, `dolores`, 389, c)
@@ -10,9 +13,13 @@ func TestNewOrganizationWithSimpleBind(t *testing.T) {
 		t.Fatal(`org initial failed`)
 	}
 
-	d, m, _, _ := org.OrganizationView(`b4vaqu11scghuujqilgg`)
-	t.Log(d)
-	t.Log(m)
+	d, m, _, _ := org.OrganizationView(`b4vb7p91scghuujqim3g`)
+	for _, v := range d {
+		fmt.Println(v[`ou`].(string))
+	}
+	for _, v := range m {
+		fmt.Println(v[`name`].(string))
+	}
 }
 
 func BenchmarkOriganizationView(b *testing.B) {
