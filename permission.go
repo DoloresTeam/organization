@@ -26,7 +26,7 @@ func (org *Organization) AddPermission(name, description string, types []string,
 	aq.Attribute(`description`, []string{description})
 	aq.Attribute(`rbacType`, types)
 
-	return id, org.l.Add(aq)
+	return id, org.Add(aq)
 }
 
 // ModifyPermission in ldap
@@ -49,7 +49,7 @@ func (org *Organization) ModifyPermission(id, name, description string, types []
 		mq.Replace(`rbacType`, types)
 	}
 
-	err = org.l.Modify(mq)
+	err = org.Modify(mq)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (org *Organization) DelPermission(id string) error {
 
 	dq := ldap.NewDelRequest(op[`dn`].(string), nil)
 
-	return org.l.Del(dq)
+	return org.Del(dq)
 }
 
 // PermissionByType all permission which contain this dolorestype
@@ -92,7 +92,7 @@ func (org *Organization) PermissionByType(dtype string, isUnit bool) ([]string, 
 		fmt.Sprintf(`(rbacType=%s)`, dtype),
 		[]string{`id`}, nil)
 
-	sr, err := org.l.Search(sq)
+	sr, err := org.Search(sq)
 	if err != nil {
 		return nil, err
 	}

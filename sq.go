@@ -44,9 +44,9 @@ func (org *Organization) search(sq *searchRequest) (*SearchResult, error) {
 	var err error
 
 	if sq.size == 0 && sq.cookie == nil {
-		lsr, err = org.l.SearchWithPaging(lsq, 200) // 会循环拿完所有对象
+		lsr, err = org.SearchWithPaging(lsq, 200) // 会循环拿完所有对象
 	} else {
-		lsr, err = org.l.Search(lsq)
+		lsr, err = org.Search(lsq)
 	}
 
 	if err != nil {
@@ -141,7 +141,7 @@ func (org *Organization) searchUnit(filter string, containACL bool) ([]map[strin
 		ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false,
 		filter, attrs, nil)
 
-	sr, e := org.l.Search(sq)
+	sr, e := org.Search(sq)
 	if e != nil {
 		return nil, e
 	}

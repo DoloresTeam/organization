@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/DoloresTeam/organization/gorbacx"
-
+	"github.com/doloresteam/organization/ldap-pool"
 	ldap "gopkg.in/ldap.v2"
 )
 
 // Organization ldap operation handler
 type Organization struct {
-	l                     *ldap.Conn
+	pool                  ldappool.Pool
 	rbacx                 *gorbacx.RBACX
 	subffix               string
 	latestResetVersion    string
@@ -20,32 +20,40 @@ type Organization struct {
 }
 
 // NewOrganization ...
-func NewOrganization(subffix string, ldapBindConn *ldap.Conn, orgViewChangeEvent chan []string) (*Organization, error) {
-
-	if len(subffix) == 0 || ldapBindConn == nil {
-		return nil, errors.New(`subfix and ldapBindConn must not be nil`)
-	}
-
-	// TODO 验证ldap 的目录结构
-	org := &Organization{ldapBindConn, gorbacx.New(), subffix, ``, orgViewChangeEvent}
-
-	return org, org.RefreshRBAC()
-}
+// func NewOrganization(subffix string, ldapBindConn *ldap.Conn, orgViewChangeEvent chan []string) (*Organization, error) {
+//
+// 	if len(subffix) == 0 || ldapBindConn == nil {
+// 		return nil, errors.New(`subfix and ldapBindConn must not be nil`)
+// 	}
+//
+// 	pool := ldappool.NewChannelPool(1, 5, `ldap-default-pool`, func(string) {
+//
+// 	}, []uint8{ldap.LDAPResultTimeLimitExceeded, ldap.ErrorNetwork})
+//
+// 	// TODO 验证ldap 的目录结构
+// 	org := &Organization{ldapBindConn, gorbacx.New(), subffix, ``, orgViewChangeEvent}
+//
+// 	return org, org.RefreshRBAC()
+// }
 
 // NewOrganizationWithSimpleBind ...
 func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port int, orgViewChangeEvent chan []string) (*Organization, error) {
 
-	l, err := ldap.Dial(`tcp`, fmt.Sprintf(`%s:%d`, host, port))
-	if err != nil {
-		return nil, errors.New(`dial ldap server failed`)
-	}
-
-	err = l.Bind(rootDN, rootPWD)
+	pool, err := ldappool.NewChannelPool(1, 5, `ldap-default-pool`, func(string) (ldap.Client, error) {
+		c, err := ldap.Dial(`tcp`, fmt.Sprintf(`%s:%d`, host, port))
+		if err != nil {
+			return nil, errors.New(`dial ldap server failed`)
+		}
+		return c, c.Bind(rootDN, rootPWD)
+	}, []uint8{ldap.LDAPResultTimeLimitExceeded, ldap.ErrorNetwork})
 	if err != nil {
 		return nil, err
 	}
 
-	return NewOrganization(subffix, l, orgViewChangeEvent)
+	// TODO 验证ldap 的目录结构
+	org := &Organization{pool, gorbacx.New(), subffix, ``, orgViewChangeEvent}
+
+	return org, org.RefreshRBAC()
 }
 
 func (org *Organization) RefreshRBAC() error {

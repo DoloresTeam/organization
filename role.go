@@ -31,7 +31,7 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) (s
 	aq.Attribute(`upid`, ups)
 	aq.Attribute(`ppid`, pps)
 
-	err = org.l.Add(aq) // 先写数据库
+	err = org.Add(aq) // 先写数据库
 	if err != nil {
 		return ``, err
 	}
@@ -57,7 +57,7 @@ func (org *Organization) DelRole(id string) error {
 	dn := org.dn(id, role)
 	dq := ldap.NewDelRequest(dn, nil)
 
-	err = org.l.Del(dq)
+	err = org.Del(dq)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (org *Organization) ModifyRole(id, name, description string, ups, pps []str
 		mq.Replace(`ppid`, pps)
 	}
 
-	err = org.l.Modify(mq)
+	err = org.Modify(mq)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (org *Organization) RoleIDsByMemberID(id string) ([]string, error) {
 	sq := ldap.NewSearchRequest(org.parentDN(member),
 		ldap.ScopeSingleLevel,
 		ldap.DerefAlways, 0, 0, false, filter, []string{`rbacRole`}, nil)
-	sr, err := org.l.Search(sq)
+	sr, err := org.Search(sq)
 	if err != nil {
 		return nil, err
 	}

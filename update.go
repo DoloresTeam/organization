@@ -34,9 +34,9 @@ func (org *Organization) refreshRBACIfNeeded(o, n []string) {
 	if err == nil {
 		func(dn string) {
 			sq := ldap.NewSearchRequest(dn, ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, true, `(objectClass=audit)`, nil, nil)
-			sr, _ := org.l.Search(sq)
+			sr, _ := org.Search(sq)
 			for _, r := range sr.Entries {
-				org.l.Del(ldap.NewDelRequest(r.DN, nil))
+				org.Del(ldap.NewDelRequest(r.DN, nil))
 			}
 		}(org.parentDN(audit))
 		org.latestResetVersion = newTimeStampVersion()
@@ -234,7 +234,7 @@ func (org *Organization) addAuditLog(action, category string, mids []string, con
 	aq.Attribute(`mid`, mids)
 	aq.Attribute(`auditContent`, []string{string(json)})
 
-	err = org.l.Add(aq)
+	err = org.Add(aq)
 	if err != nil {
 		return err
 	}
@@ -251,7 +251,7 @@ func (org *Organization) fetchAuditLog(memberID, lastedLogID string) ([]map[stri
 	sq := ldap.NewSearchRequest(org.parentDN(audit),
 		ldap.ScopeSingleLevel, ldap.DerefAlways, 0, 0, false, filter,
 		[]string{`createTimestamp`, `action`, `auditContent`, `category`}, nil)
-	sr, err := org.l.Search(sq)
+	sr, err := org.Search(sq)
 	if err != nil {
 		return nil, err
 	}

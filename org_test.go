@@ -13,6 +13,10 @@ func TestNewOrganizationWithSimpleBind(t *testing.T) {
 		t.Fatal(`org initial failed`)
 	}
 
+	if testing.Short() {
+		t.SkipNow()
+	}
+
 	d, m, _, _ := org.OrganizationView(`b4vb7p91scghuujqim3g`)
 	for _, v := range d {
 		fmt.Println(v[`ou`].(string))

@@ -26,7 +26,7 @@ func (org *Organization) AddMember(info map[string][]string) (string, error) {
 		aq.Attribute(k, v)
 	}
 
-	err := org.l.Add(aq)
+	err := org.Add(aq)
 	if err != nil {
 		return ``, err
 	}
@@ -52,7 +52,7 @@ func (org *Organization) ModifyMember(id string, info map[string][]string) error
 		mq.Replace(k, v)
 	}
 
-	err = org.l.Modify(mq)
+	err = org.Modify(mq)
 	if err == nil {
 		go func() {
 			nMember, _ := org.MemberByID(id, true, false)
@@ -74,7 +74,7 @@ func (org *Organization) DelMember(id string) error {
 		return err
 	}
 	dq := ldap.NewDelRequest(fmt.Sprintf(`id=%s,%s`, id, org.parentDN(member)), nil)
-	err = org.l.Del(dq)
+	err = org.Del(dq)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (org *Organization) memberIDsByFilter(filter string) ([]string, error) {
 	dn := org.parentDN(member)
 	sq := ldap.NewSearchRequest(dn, ldap.ScopeSingleLevel, ldap.DerefAlways,
 		0, 0, false, filter, []string{`id`}, nil)
-	sr, e := org.l.Search(sq)
+	sr, e := org.Search(sq)
 	if e != nil {
 		return nil, e
 	}

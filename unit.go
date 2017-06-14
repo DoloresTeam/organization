@@ -22,7 +22,7 @@ func (org *Organization) AddUnit(parentID string, info map[string][]string) (str
 
 		sq := ldap.NewSearchRequest(org.parentDN(unit),
 			ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, true, filter, []string{`id`}, nil)
-		sr, err := org.l.Search(sq)
+		sr, err := org.Search(sq)
 		if err != nil {
 			return ``, err
 		}
@@ -41,7 +41,7 @@ func (org *Organization) AddUnit(parentID string, info map[string][]string) (str
 		aq.Attribute(k, v)
 	}
 
-	err := org.l.Add(aq)
+	err := org.Add(aq)
 	if err != nil {
 		return ``, err
 	}
@@ -63,7 +63,7 @@ func (org *Organization) ModifyUnit(id string, info map[string][]string) error {
 	for k, v := range info {
 		mq.Replace(k, v)
 	}
-	err = org.l.Modify(mq)
+	err = org.Modify(mq)
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func (org *Organization) DelUnit(id string) error {
 
 	dq := ldap.NewDelRequest(unit[`dn`].(string), nil)
 
-	err = org.l.Del(dq)
+	err = org.Del(dq)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (org *Organization) UnitSubIDs(id string) ([]string, error) {
 	dn := unit[`dn`].(string)
 
 	sq := ldap.NewSearchRequest(dn, ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false, `(objectClass=organizationalUnit)`, []string{`id`}, nil)
-	sr, err := org.l.Search(sq)
+	sr, err := org.Search(sq)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func (org *Organization) UnitIDsByTypeIDs(ids []string) ([]string, error) {
 		return nil, err
 	}
 	sq := ldap.NewSearchRequest(org.parentDN(unit), ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false, filter, []string{`id`}, nil)
-	sr, err := org.l.Search(sq)
+	sr, err := org.Search(sq)
 	if err != nil {
 		return nil, err
 	}

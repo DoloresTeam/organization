@@ -19,7 +19,7 @@ func (org *Organization) AddType(name, description string, isUnit bool) (string,
 	aq.Attribute(`cn`, []string{name})
 	aq.Attribute(`description`, []string{description})
 
-	return id, org.l.Add(aq)
+	return id, org.Add(aq)
 }
 
 // ModifyType update name or description of doloresType
@@ -35,7 +35,7 @@ func (org *Organization) ModifyType(id string, name, description string, isUnit 
 		mq.Replace(`description`, []string{description})
 	}
 
-	return org.l.Modify(mq)
+	return org.Modify(mq)
 }
 
 // DelType by id
@@ -71,7 +71,7 @@ func (org *Organization) DelType(id string, isUnit bool) error {
 	dn := org.dn(id, typeCategory(isUnit))
 	dq := ldap.NewDelRequest(dn, nil)
 
-	return org.l.Del(dq)
+	return org.Del(dq)
 }
 
 // Types in ldap server
@@ -98,7 +98,7 @@ func (org *Organization) TypeByIDs(ids []string) ([]map[string]interface{}, erro
 		ldap.DerefAlways,
 		0, 0, false, filter, []string{`id`, `cn`, `description`}, nil)
 
-	sr, err := org.l.Search(sq)
+	sr, err := org.Search(sq)
 	if err != nil {
 		return nil, err
 	}
