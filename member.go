@@ -69,7 +69,7 @@ func (org *Organization) DelMember(id string) error {
 	if err != nil {
 		return err
 	}
-	mids, err := org.MemberIDsByTypeIDs([]string{m[`rbacType`].(string)})
+	mids, err := org.relatedMIDs(m[`rbacType`].(string))
 	if err != nil {
 		return err
 	}

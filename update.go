@@ -41,7 +41,7 @@ func (org *Organization) refreshRBACIfNeeded(o, n []string) {
 		}(org.parentDN(audit))
 		org.latestResetVersion = newTimeStampVersion()
 	} else {
-		fmt.Print(`err: %s`, err.Error())
+		fmt.Printf(`err: %s`, err.Error())
 	}
 }
 
@@ -238,6 +238,9 @@ func (org *Organization) addAuditLog(action, category string, mids []string, con
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf(`%s: %s ====> %s`, action, category, mids)
+	fmt.Println()
 
 	go func() {
 		org.organizationViewEvent <- mids
