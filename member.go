@@ -89,19 +89,40 @@ func (org *Organization) DelMember(id string) error {
 
 // AuthMember ...
 func (org *Organization) AuthMember(telephoneNumber, pwd string) (string, error) {
-
-	dn := org.parentDN(member)
-	filter := fmt.Sprintf(`(&(telephoneNumber=%s)(userPassword=%s))`, telephoneNumber, fmt.Sprintf(`{MD5}%s`, pwd))
-	sq := &searchRequest{dn, filter, []string{`id`}, nil, 0, nil}
-
-	r, e := org.search(sq)
-	if e != nil {
-		return ``, e
+	filter := fmt.Sprintf(`(telephoneNumber=%s)`, telephoneNumber)
+	sq := ldap.NewSearchRequest(org.parentDN(member), ldap.ScopeSingleLevel, ldap.DerefAlways, 0, 0, false, filter, []string{`id`}, nil)
+	r, err := org.Search(sq)
+	if err != nil {
+		return ``, err
 	}
-	if len(r.Data) != 1 {
-		return ``, errors.New(`not found`)
+	if len(r.Entries) != 1 {
+		return ``, fmt.Errorf(`can't find this member by tel: [%s]`, telephoneNumber)
 	}
-	return r.Data[0][`id`].(string), nil
+
+	success, err := org.Compare(r.Entries[0].DN, `userPassword`, pwd)
+	if err != nil {
+		return ``, err
+	}
+	if !success {
+		return ``, errors.New(`password incorrect`)
+	}
+	return r.Entries[0].GetAttributeValue(`id`), nil
+}
+
+// ModifyPassword ...
+func (org *Organization) ModifyPassword(id, originalPassword, newPassword string) error {
+	dn := org.dn(id, member)
+	success, err := org.Compare(dn, `userPassword`, originalPassword)
+	if err != nil {
+		return err
+	}
+	if !success {
+		return errors.New(`password incorrect`)
+	}
+
+	mq := ldap.NewModifyRequest(dn)
+	mq.Replace(`userPassword`, []string{newPassword})
+	return org.Modify(mq) // 这样写可以避免产生审计日志
 }
 
 // Members return all members

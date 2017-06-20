@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"testing"
 )
 
@@ -55,7 +54,7 @@ func TestAddDelMember(t *testing.T) {
 		`rbacRole`:        rids,
 		`rbacType`:        tids,
 		`unitID`:          uids,
-		`userPassword`:    []string{fmt.Sprintf(`{MD5}%s`, hex.EncodeToString(pwd))},
+		`userPassword`:    []string{hex.EncodeToString(pwd)},
 	})
 
 	if err != nil {
@@ -80,15 +79,49 @@ func TestAddDelMember(t *testing.T) {
 }
 
 func TestFetchAllMembers(t *testing.T) {
-
 	if testing.Short() {
 		t.SkipNow()
 	}
 
-	sr, err := org.Members(30, nil)
+	_, err := org.Members(50, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestModifyPassword(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	id := `b4vb0vh1scghuujqilo0`
+
+	m := md5.New()
+	m.Write([]byte(`123456`))
+	op := hex.EncodeToString(m.Sum(nil))
+
+	m.Reset()
+	m.Write([]byte(`123456`))
+	np := hex.EncodeToString(m.Sum(nil))
+
+	err := org.ModifyPassword(id, op, np)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Log(sr.Data)
+	member, err := org.MemberByID(id, false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tel := member[`telephoneNumber`].(string)
+
+	_, err = org.AuthMember(tel, np)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = org.ModifyPassword(id, np, op) // 还原密码
+	if err != nil {
+		t.Fatal(err)
+	}
 }
