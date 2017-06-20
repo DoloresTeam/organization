@@ -7,11 +7,17 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
+// MemberSignleAttrs default signle attributes
 var MemberSignleAttrs = [...]string{`id`, `name`, `cn`, `telephoneNumber`, `labeledURI`, `gender`, `title`, `priority`}
+
+// MemberSignleACLAttrs default signle acl attributes
 var MemberSignleACLAttrs = [...]string{`rbacType`}
 
-var MemberMutAttrs = [...]string{`email`, `unitID`}
-var MemberMutACLAttrs = [...]string{`rbacRole`}
+// MemberMultipleAttrs default multiple attributes
+var MemberMultipleAttrs = [...]string{`email`, `unitID`}
+
+// MemberMultipleACLAttrs default multiple acl attributes
+var MemberMultipleACLAttrs = [...]string{`rbacRole`}
 
 // AddMember to ldap server
 func (org *Organization) AddMember(info map[string][]string) (string, error) {
@@ -104,12 +110,12 @@ func (org *Organization) Members(pageSize uint32, cookie []byte) (*SearchResult,
 	sq := &searchRequest{
 		org.parentDN(member), `(objectClass=member)`,
 		append(MemberSignleAttrs[:], MemberSignleACLAttrs[:]...),
-		append(MemberMutAttrs[:], MemberMutACLAttrs[:]...), pageSize, cookie}
+		append(MemberMultipleAttrs[:], MemberMultipleACLAttrs[:]...), pageSize, cookie}
 
 	return org.search(sq)
 }
 
-// MemberIDsByTypeIDs
+// MemberIDsByTypeIDs ...
 func (org *Organization) MemberIDsByTypeIDs(tids []string) ([]string, error) {
 	filter, err := sqConvertArraysToFilter(`rbacType`, tids)
 	if err != nil {
@@ -118,7 +124,7 @@ func (org *Organization) MemberIDsByTypeIDs(tids []string) ([]string, error) {
 	return org.memberIDsByFilter(filter)
 }
 
-// MemeberIDsByRoleID
+// MemberIDsByRoleIDs ...
 func (org *Organization) MemberIDsByRoleIDs(rids []string) ([]string, error) {
 	filter, err := sqConvertArraysToFilter(`rbacRole`, rids)
 	if err != nil {
@@ -127,6 +133,7 @@ func (org *Organization) MemberIDsByRoleIDs(rids []string) ([]string, error) {
 	return org.memberIDsByFilter(filter)
 }
 
+// MemberIDsByDepartmentIDs ...
 func (org *Organization) MemberIDsByDepartmentIDs(ids []string) ([]string, error) {
 	filter, err := sqConvertArraysToFilter(`unitID`, ids)
 	if err != nil {
@@ -150,12 +157,13 @@ func (org *Organization) memberIDsByFilter(filter string) ([]string, error) {
 	return ids, nil
 }
 
+// MemberByIDs ...
 func (org *Organization) MemberByIDs(ids []string, containACL bool, containPwd bool) ([]map[string]interface{}, error) {
 	sa := MemberSignleAttrs[:]
-	ma := MemberMutAttrs[:]
+	ma := MemberMultipleAttrs[:]
 	if containACL {
 		sa = append(sa, MemberSignleACLAttrs[:]...)
-		ma = append(ma, MemberMutACLAttrs[:]...)
+		ma = append(ma, MemberMultipleACLAttrs[:]...)
 	}
 	if containPwd {
 		sa = append(sa, `thirdPassword`)

@@ -13,16 +13,22 @@ import (
 )
 
 const (
-	AuditActionAdd    = `add`
-	AuditActionDel    = `delete`
+	// AuditActionAdd ...
+	AuditActionAdd = `add`
+	// AuditActionDel ....
+	AuditActionDel = `delete`
+	// AuditActionUpdate ....
 	AuditActionUpdate = `update`
 )
 
 const (
-	AuditCategoryUnit   = `department`
+	// AuditCategoryUnit ...
+	AuditCategoryUnit = `department`
+	// AuditCategoryMember ...
 	AuditCategoryMember = `member`
 )
 
+// AuditContent ...
 type AuditContent []map[string]interface{}
 
 // 更新权限和角色时会影响整个数据视图
@@ -276,15 +282,17 @@ func (org *Organization) fetchAuditLog(memberID, lastedLogID string) ([]map[stri
 	return result, nil
 }
 
+// IsValidVersion ...
 func (org *Organization) IsValidVersion(version string) bool {
 	return org.latestResetVersion == `` || version > org.latestResetVersion
 }
 
+// GenerateChangeLogFromVersion ...
 func (org *Organization) GenerateChangeLogFromVersion(version string, mid string) (string, []map[string]interface{}, error) {
 	if org.IsValidVersion(version) {
 		logs, err := org.fetchAuditLog(mid, version)
 		return newTimeStampVersion(), logs, err
-	} else {
-		return ``, nil, fmt.Errorf(`version invalid. latest reset version %s`, org.latestResetVersion)
 	}
+
+	return ``, nil, fmt.Errorf(`version invalid. latest reset version %s`, org.latestResetVersion)
 }

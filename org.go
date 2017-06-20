@@ -51,11 +51,12 @@ func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port i
 	}
 
 	// TODO 验证ldap 的目录结构
-	org := &Organization{pool, gorbacx.New(), subffix, ``, orgViewChangeEvent}
+	_org := &Organization{pool, gorbacx.New(), subffix, ``, orgViewChangeEvent}
 
-	return org, org.RefreshRBAC()
+	return _org, _org.RefreshRBAC()
 }
 
+// RefreshRBAC sync type permission and role with ldap server.
 func (org *Organization) RefreshRBAC() error {
 
 	err := func() error {
@@ -99,6 +100,7 @@ func (org *Organization) RefreshRBAC() error {
 	return err
 }
 
+// OrganizationView get this member's visible departments 、members and version of this `organization view`
 func (org *Organization) OrganizationView(id string) ([]map[string]interface{}, []map[string]interface{}, string, error) { // departments, members, version, error
 	// 通过id 拿到所有的 角色
 	roleIDs, err := org.RoleIDsByMemberID(id)
@@ -123,7 +125,7 @@ func (org *Organization) OrganizationView(id string) ([]map[string]interface{}, 
 	}
 
 	f := fmt.Sprintf(`(&(%s)(%s))`, filter, uFilter) // 添加部门过滤条件 确定有访问此部门的全新啊
-	msq := &searchRequest{org.parentDN(member), f, MemberSignleAttrs[:], MemberMutAttrs[:], 0, nil}
+	msq := &searchRequest{org.parentDN(member), f, MemberSignleAttrs[:], MemberMultipleAttrs[:], 0, nil}
 	msr, err := org.search(msq)
 	if err != nil {
 		return nil, nil, ``, err

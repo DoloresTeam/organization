@@ -7,6 +7,7 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
+// UnitAttributes ...
 var UnitAttributes = [...]string{`id`, `ou`, `description`, `priority`}
 
 // AddUnit to ldap
@@ -54,6 +55,7 @@ func (org *Organization) AddUnit(parentID string, info map[string][]string) (str
 	return id, nil
 }
 
+// ModifyUnit ...
 func (org *Organization) ModifyUnit(id string, info map[string][]string) error {
 	oUnit, err := org.UnitByID(id)
 	if err != nil {
@@ -74,7 +76,7 @@ func (org *Organization) ModifyUnit(id string, info map[string][]string) error {
 	return org.logModifyUnit(oUnit, nUnit)
 }
 
-// DelUnitByID ...
+// DelUnit ...
 func (org *Organization) DelUnit(id string) error {
 	ids, err := org.UnitSubIDs(id)
 	if err != nil {
@@ -131,6 +133,7 @@ func (org *Organization) UnitByIDs(ids []string) ([]map[string]interface{}, erro
 	return org.searchUnit(filter, true)
 }
 
+// UnitSubIDs ....
 func (org *Organization) UnitSubIDs(id string) ([]string, error) {
 
 	unit, err := org.UnitByID(id)
@@ -152,6 +155,7 @@ func (org *Organization) UnitSubIDs(id string) ([]string, error) {
 	return ids, nil
 }
 
+// UnitIDsByTypeIDs ...
 func (org *Organization) UnitIDsByTypeIDs(ids []string) ([]string, error) {
 	filter, err := sqConvertArraysToFilter(`rbacType`, ids)
 	if err != nil {

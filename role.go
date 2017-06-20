@@ -42,7 +42,7 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) (s
 	return id, nil
 }
 
-// RemoveRole from ldap server, automatically update org's rbacx
+// DelRole from ldap server, automatically update org's rbacx
 func (org *Organization) DelRole(id string) error {
 
 	// 判断有没有人引用这个Role
