@@ -42,7 +42,7 @@ func (org *Organization) fetchAllowedTypesInRoles(rids []string) []string {
 func (org *Organization) fetchAllRolesByTypeID(tid string) []string {
 	var rids []string
 	for _, policy := range org.enforcer.GetFilteredPolicy(1, tid) {
-		rids = append(rids, policy[1])
+		rids = append(rids, policy[0])
 	}
 	return rids
 }
