@@ -97,8 +97,10 @@ func (org *Organization) ModifyRole(id, name, description string, ups, pps []str
 		return err
 	}
 
-	org.refreshRBACIfNeeded(r[`upid`].([]string), ups)
-	org.refreshRBACIfNeeded(r[`ppid`].([]string), pps)
+	oTypes := append(ups, r[`upid`].([]string)...)
+	nTypes := append(pps, r[`ppid`].([]string)...)
+
+	org.refreshRBACIfNeeded(oTypes, nTypes)
 
 	return nil
 }

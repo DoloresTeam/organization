@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/casbin/casbin/util"
 	"github.com/deckarep/golang-set"
 	ldap "gopkg.in/ldap.v2"
 )
@@ -33,7 +34,7 @@ type AuditContent []map[string]interface{}
 
 // 更新权限和角色时会影响整个数据视图
 func (org *Organization) refreshRBACIfNeeded(o, n []string) {
-	if set(o).Equal(set(n)) { // 没有变化
+	if util.ArrayEquals(o, n) { // 没有变化
 		return
 	}
 	err := org.enforcer.LoadPolicy() // 更新RBAC缓存
