@@ -4,21 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/DoloresTeam/organization/gorbacx"
 	ldap "gopkg.in/ldap.v2"
 )
 
 // AddRole to ldap server, this method will automatically update org's rbacx
 func (org *Organization) AddRole(name, description string, ups, pps []string) (string, error) {
-
-	upObjects, err := org.convertIDToObject(ups)
-	if err != nil {
-		return ``, err
-	}
-	ppObjects, err := org.convertIDToObject(pps)
-	if err != nil {
-		return ``, err
-	}
 
 	id := generateNewID()
 	dn := org.dn(id, role)
@@ -31,13 +21,16 @@ func (org *Organization) AddRole(name, description string, ups, pps []string) (s
 	aq.Attribute(`upid`, ups)
 	aq.Attribute(`ppid`, pps)
 
-	err = org.Add(aq) // 先写数据库
+	err := org.Add(aq) // 先写数据库
 	if err != nil {
 		return ``, err
 	}
 
-	role := gorbacx.NewRole(id, upObjects, ppObjects)
-	org.rbacx.Add([]*gorbacx.Role{role})
+	r, err := org.RoleByID(id)
+	if err != nil {
+		return ``, nil
+	}
+	org.insertNewPolicyByRole(r)
 
 	return id, nil
 }
@@ -62,7 +55,7 @@ func (org *Organization) DelRole(id string) error {
 		return err
 	}
 
-	org.rbacx.Remove([]string{id})
+	org.removePolicyByRoleID(id)
 
 	return nil
 }
@@ -186,27 +179,4 @@ func (org *Organization) RoleIDsByPermissionID(id string) ([]string, error) {
 	}
 
 	return ids, nil
-}
-
-func (org *Organization) convertIDToObject(ids []string) ([]*gorbacx.Permission, error) {
-
-	var objects []*gorbacx.Permission // 权限有效性判断
-
-	for _, id := range ids {
-		p, _ := org.rbacx.PermissionByID(id)
-		if p != nil {
-			objects = append(objects, p)
-		} else {
-			r, err := org.PermissionByID(id)
-			if r == nil {
-				if err == nil {
-					err = fmt.Errorf(`convert failed no this permission info id: %s`, id)
-				}
-				return nil, err
-			}
-			objects = append(objects, gorbacx.NewPermission(r[`id`].(string), r[`rbacType`].([]string)))
-		}
-	}
-
-	return objects, nil
 }

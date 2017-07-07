@@ -17,7 +17,7 @@ func TestNewOrganizationWithSimpleBind(t *testing.T) {
 		t.SkipNow()
 	}
 
-	d, m, _, _ := org.OrganizationView(`b4vb7p91scghuujqim3g`)
+	d, m, _, _ := org.OrganizationView(`b4vatdh1scghuujqili0`)
 	for _, v := range d {
 		fmt.Println(v[`ou`].(string))
 	}

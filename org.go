@@ -3,9 +3,10 @@ package organization
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
-	"github.com/DoloresTeam/organization/gorbacx"
+	"github.com/casbin/casbin"
 	"github.com/doloresteam/organization/ldap-pool"
 	ldap "gopkg.in/ldap.v2"
 )
@@ -13,7 +14,7 @@ import (
 // Organization ldap operation handler
 type Organization struct {
 	pool                  ldappool.Pool
-	rbacx                 *gorbacx.RBACX
+	enforcer              *casbin.Enforcer
 	subffix               string
 	latestResetVersion    string
 	organizationViewEvent chan []string
@@ -51,53 +52,18 @@ func NewOrganizationWithSimpleBind(subffix, host, rootDN, rootPWD string, port i
 	}
 
 	// TODO 验证ldap 的目录结构
-	_org := &Organization{pool, gorbacx.New(), subffix, ``, orgViewChangeEvent}
+	_org := &Organization{pool, &casbin.Enforcer{}, subffix, ``, orgViewChangeEvent}
 
-	return _org, _org.RefreshRBAC()
-}
+	m := casbin.NewModel()
 
-// RefreshRBAC sync type permission and role with ldap server.
-func (org *Organization) RefreshRBAC() error {
+	m.AddDef(`r`, `r`, `sub, obj, act`)
+	m.AddDef(`p`, `p`, `sub, obj, act`)
+	m.AddDef("e", "e", "some(where (p.eft == allow))")
+	m.AddDef("m", "m", "r.obj == p.obj && r.act == p.act")
 
-	err := func() error {
-		org.rbacx.Clear()
+	_org.enforcer.InitWithModelAndAdapter(m, _org)
 
-		rs, err := org.AllRoles()
-		if err != nil {
-			return err
-		}
-
-		var roles []*gorbacx.Role
-		for _, v := range rs {
-
-			urs, err := org.PermissionByIDs(v[`upid`].([]string))
-			if err != nil {
-				return err
-			}
-
-			mrs, err := org.PermissionByIDs(v[`ppid`].([]string))
-			if err != nil {
-				return err
-			}
-
-			var ups []*gorbacx.Permission
-			for _, info := range urs.Data {
-				ups = append(ups, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
-			}
-
-			var mps []*gorbacx.Permission
-			for _, info := range mrs.Data {
-				mps = append(mps, gorbacx.NewPermission(info[`id`].(string), info[`rbacType`].([]string)))
-			}
-
-			roles = append(roles, gorbacx.NewRole(v[`id`].(string), ups, mps))
-		}
-
-		org.rbacx.Add(roles)
-
-		return nil
-	}()
-	return err
+	return _org, nil
 }
 
 // OrganizationView get this member's visible departments 、members and version of this `organization view`
@@ -108,7 +74,10 @@ func (org *Organization) OrganizationView(id string) ([]map[string]interface{}, 
 		return nil, nil, ``, err
 	}
 	// 类型
-	types := org.rbacx.MatchedTypes(roleIDs) // 这个Type包含了当前角色下所有的部门和员工Type， 所有的Type ID 都是全局唯一的
+	// types := org.rbacx.MatchedTypes(roleIDs) // 这个Type包含了当前角色下所有的部门和员工Type， 所有的Type ID 都是全局唯一的
+	types := org.fetchAllowedTypesInRoles(roleIDs)
+
+	log.Printf(`%s allowed types %v`, id, types)
 
 	filter, err := sqConvertArraysToFilter(`rbacType`, types)
 	if err != nil {
@@ -124,7 +93,7 @@ func (org *Organization) OrganizationView(id string) ([]map[string]interface{}, 
 		return nil, nil, ``, err
 	}
 
-	f := fmt.Sprintf(`(&(%s)(%s))`, filter, uFilter) // 添加部门过滤条件 确定有访问此部门的全新啊
+	f := fmt.Sprintf(`(&(%s)(%s))`, filter, uFilter) // 添加部门过滤条件 确定有访问此部门的权限啊
 	msq := &searchRequest{org.parentDN(member), f, MemberSignleAttrs[:], MemberMultipleAttrs[:], 0, nil}
 	msr, err := org.search(msq)
 	if err != nil {

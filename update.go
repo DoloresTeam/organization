@@ -36,7 +36,7 @@ func (org *Organization) refreshRBACIfNeeded(o, n []string) {
 	if set(o).Equal(set(n)) { // 没有变化
 		return
 	}
-	err := org.RefreshRBAC() // 更新RBAC缓存
+	err := org.enforcer.LoadPolicy() // 更新RBAC缓存
 	if err == nil {
 		func(dn string) {
 			sq := ldap.NewSearchRequest(dn, ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, true, `(objectClass=audit)`, nil, nil)
@@ -69,7 +69,7 @@ func vset(ss []interface{}) []string {
 }
 
 func (org *Organization) relatedMIDs(tid string) ([]string, error) {
-	rids := org.rbacx.RoleIDsByTypeID(tid)
+	rids := org.fetchAllRolesByTypeID(tid)
 	if len(rids) == 0 {
 		return nil, errors.New(`no role refrence this type`)
 	}
@@ -87,8 +87,8 @@ func (org *Organization) logModifyMember(oMember, nMember map[string]interface{}
 	nRole := set(nMember[`rbacRole`].([]string))
 	if !oRole.Equal(nRole) { // 用户的角色发生了变化
 		// 计算发生变化前后的`Type`变化y
-		oType := set(org.rbacx.MatchedTypes(oMember[`rbacRole`].([]string)))
-		nType := set(org.rbacx.MatchedTypes(nMember[`rbacRole`].([]string)))
+		oType := set(org.fetchAllowedTypesInRoles(oMember[`rbacRole`].([]string)))
+		nType := set(org.fetchAllowedTypesInRoles(nMember[`rbacRole`].([]string)))
 
 		addTypes := oType.Difference(nType)
 
