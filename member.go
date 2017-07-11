@@ -155,8 +155,17 @@ func (org *Organization) MemberIDsByRoleIDs(rids []string) ([]string, error) {
 }
 
 // MemberIDsByDepartmentIDs ...
-func (org *Organization) MemberIDsByDepartmentIDs(ids []string) ([]string, error) {
-	filter, err := sqConvertArraysToFilter(`unitID`, ids)
+func (org *Organization) MemberIDsByDepartmentIDs(ids []string, recursive bool) ([]string, error) {
+	allIds := ids
+	if recursive {
+		for _, id := range ids { // 递归查到所有的子部门ID
+			subIds, err := org.UnitSubIDs(id)
+			if err == nil {
+				allIds = append(allIds, subIds...)
+			}
+		}
+	}
+	filter, err := sqConvertArraysToFilter(`unitID`, allIds)
 	if err != nil {
 		return nil, err
 	}

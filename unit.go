@@ -84,7 +84,7 @@ func (org *Organization) DelUnit(id string) error {
 	}
 
 	// 通过部门ID 找员工
-	mids, err := org.MemberIDsByDepartmentIDs(ids)
+	mids, err := org.MemberIDsByDepartmentIDs(ids, true)
 	if err != nil {
 		return err
 	}
